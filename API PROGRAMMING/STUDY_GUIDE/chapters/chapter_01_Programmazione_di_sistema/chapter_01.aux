@@ -1,0 +1,84 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\@writefile{toc}{\contentsline {chapter}{\numberline {1}System Programming Overview}{11}{chapter.1}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\@writefile{lof}{\contentsline {figure}{\numberline {1.1}{\ignorespaces The typical software stack, illustrating how system programming bridges the gap between application software and raw hardware.}}{12}{figure.1.1}\protected@file@percent }
+\newlabel{fig:system_architecture}{{1.1}{12}{The typical software stack, illustrating how system programming bridges the gap between application software and raw hardware}{figure.1.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.1}What is System Programming?}{12}{section.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.1}The Role of the Runtime Library}{13}{subsection.1.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.2}Resource-Constrained Environments}{13}{subsection.1.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.3}Professional Responsibility}{13}{subsection.1.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.4}Building Knowledge: The Concept Dependency Chain}{14}{subsection.1.1.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.2}Language Selection: Why Not Java, Python, or Go?}{15}{section.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2.1}The Garbage Collection Problem}{15}{subsection.1.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Stop-the-World, Mark \& Sweep, Reference Counting}{15}{section*.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2.2}The Remaining Candidates}{16}{subsection.1.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2.3}Why This Course Uses Rust}{16}{subsection.1.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.3}Executable Programs and Their Execution}{17}{section.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3.1}What Is an Executable Program?}{17}{subsection.1.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3.2}The Loader: From Disk to Execution}{17}{subsection.1.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3.3}The Fetch-Decode-Execute Cycle}{17}{subsection.1.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.4}The Address Space and the MMU}{18}{section.1.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.4.1}Memory as an Enormous Array}{18}{subsection.1.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.4.2}Virtual vs. Physical Addresses: The MMU}{18}{subsection.1.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.4.3}Practical Effects: Segfault, Page Fault, and Thrashing}{19}{subsection.1.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.5}Memory Hierarchy and Cache}{20}{section.1.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.5.1}Why the CPU Does Not Access RAM Directly}{20}{subsection.1.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.5.2}Impact on Data Structure Choices}{20}{subsection.1.5.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1.2}{\ignorespaces Visualizing how Contiguous Memory (Vec) maximizes CPU Cache efficiency compared to Fragmented Memory (LinkedList).}}{21}{figure.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.6}The Execution Model: What the Language ``Pretends''}{21}{section.1.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.6.1}The Entry Point: \texttt  {main(argc, argv)} and the Hidden Startup}{22}{subsection.1.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.7}The Stack}{23}{section.1.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.7.1}Structure and Properties}{23}{subsection.1.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.7.2}Step-by-Step Code Walkthrough}{24}{subsection.1.7.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1.3}{\ignorespaces Step-by-step anatomy of function calls pushing and popping frames on the Stack.}}{24}{figure.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.7.3}The Two Constraints of the Stack}{25}{subsection.1.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.8}The Heap}{26}{section.1.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.8.1}Why the Stack Is Not Enough: Three Reasons}{26}{subsection.1.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.8.2}The Key Difference from the Stack}{26}{subsection.1.8.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.8.3}Step-by-Step C++ Code Walkthrough}{26}{subsection.1.8.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.9}Allocation and Deallocation Functions}{27}{section.1.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.9.1}In C}{27}{subsection.1.9.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.9.2}In C++}{27}{subsection.1.9.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.10}Address Space Layout}{28}{section.1.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.10.1}Inspecting with \texttt  {/proc/<pid>/maps}}{28}{subsection.1.10.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.11}Variable Lifecycle: Global, Local, Dynamic}{29}{section.1.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.11.1}Java: Value vs. Reference Semantics}{29}{subsection.1.11.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.12}Pointers: Power and Peril}{29}{section.1.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.12.1}What Pointers Are}{29}{subsection.1.12.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.12.2}The Seven Ambiguities of Pointers in C/C++}{30}{subsection.1.12.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.12.3}The Bug Catalogue}{30}{subsection.1.12.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.13}Garbage Collection vs. Manual Management}{31}{section.1.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.14}Why Rust: Solutions to C/C++ Problems}{31}{section.1.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.15}Conceptual Mind Map}{32}{section.1.15}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.16}Domande ed Esercizi da Esami Passati}{33}{section.1.16}\protected@file@percent }
+\@setckpt{chapters/chapter_01_Programmazione_di_sistema/chapter_01}{
+\setcounter{page}{34}
+\setcounter{equation}{0}
+\setcounter{enumi}{7}
+\setcounter{enumii}{0}
+\setcounter{enumiii}{0}
+\setcounter{enumiv}{0}
+\setcounter{footnote}{0}
+\setcounter{mpfootnote}{0}
+\setcounter{part}{0}
+\setcounter{chapter}{1}
+\setcounter{section}{16}
+\setcounter{subsection}{0}
+\setcounter{subsubsection}{0}
+\setcounter{paragraph}{0}
+\setcounter{subparagraph}{0}
+\setcounter{figure}{3}
+\setcounter{table}{0}
+\setcounter{lstnumber}{20}
+\setcounter{tcbbreakpart}{1}
+\setcounter{tcblayer}{0}
+\setcounter{tcolorbox@number}{21}
+\setcounter{section@level}{1}
+\setcounter{Item}{28}
+\setcounter{Hfootnote}{0}
+\setcounter{bookmark@seq@number}{46}
+\setcounter{float@type}{16}
+\setcounter{lstlisting}{0}
+}

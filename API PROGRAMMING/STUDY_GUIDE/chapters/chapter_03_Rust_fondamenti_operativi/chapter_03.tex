@@ -1,0 +1,1056 @@
+\chapter{Rust Operational Fundamentals}
+
+% AI-IMAGE-REQUEST: A panoramic diagram showing the Rust ecosystem: rustup at the top managing toolchains, rustc compiler in the center, Cargo wrapping around it with arrows to crates.io, and the output flowing to target/debug and target/release folders. Show the flow from .rs source files through compilation to platform-specific executables (ARM, x86).
+
+The transition from languages like C, C++, or Java to Rust requires adopting an entirely new set of mental models. This chapter covers the operational foundations you need before writing any serious Rust code: what kind of language Rust is, how to set up and use its toolchain, how to structure projects, and how Rust's fundamental types---variables, numbers, strings, and vectors---work at the memory level. Every concept here was presented live by the professor during the lecture, with concrete demonstrations in the IDE.
+
+\begin{insightbox}
+The professor opened the lecture by stating four explicit objectives:
+\begin{enumerate}
+    \item Understand what type of language Rust is.
+    \item Know how to write a minimum program that can be compiled and executed.
+    \item Understand what the compiler guarantees and why this is useful.
+    \item Prepare the conditions to go ahead and do everything that awaits in subsequent lectures.
+\end{enumerate}
+These four objectives provide a roadmap for everything in this chapter.
+\end{insightbox}
+
+\section{What Kind of Language Is Rust?}
+
+The professor opened the lecture by establishing four defining characteristics of Rust that shape everything that follows.
+
+\subsection{A Compiled Language with Cross-Compilation}
+
+Rust is a \textbf{compiled language} that generates specific executables for the target machine. By default, the target machine is your own PC. On a Mac with an ARM M2 processor, the compiler generates ARM executables; on a Linux x86 machine, it generates x86 executables. But the compiler is also capable of \emph{cross-compilation}: you can install more complex toolchains and say ``I want to generate code for Linux x86,'' and the compiler will produce the appropriate binary. Clearly, to execute it you would need to transfer that binary to an actual Linux x86 machine.
+
+\subsection{Memory Safety by Design}
+
+Rust guarantees, \emph{by design}, the correctness of accesses to memory. It is not possible---at least when using the ``safe'' subset of Rust, which is the default---to write programs that access memory that no longer exists, that was valid in the past but is no longer valid now. The compiler tracks not only the validity of references but also the time intervals, the so-called \textbf{lifetimes}, during which it is possible to access a given reference. Beyond that interval, the reference is no longer guaranteed, and the compiler refuses to compile. This completely eliminates all problems related to \textbf{dangling pointers}, \textbf{double frees}, and similar memory bugs.
+
+\begin{insightbox}
+The professor emphasized: ``There is no \texttt{null} in Rust, simply because there is nothing. Unlike languages like C or Java, where you can mark a pointer as invalid using \texttt{null}, in Rust there is no such concept---so there is no danger of null pointer exceptions.''
+\end{insightbox}
+
+\subsection{Performance Comparable to C and C++}
+
+Rust tries to guarantee performance similar to what you can achieve with C and C++. The professor noted that C is \emph{slightly} faster because it has fewer abstraction layers, but Rust gives higher semantic expressiveness and costs only marginally more---``a really negligible thing, because the language is strongly oriented toward optimization and gives us everything that is possible.''
+
+\subsection{The Ownership Model}
+
+All the abstractions that will be encountered in subsequent weeks are based on a foundational concept called \textbf{ownership} (possession). Every value in Rust is owned by one and only one variable. This has very important consequences that will be explored in later chapters. For now, the professor asked students to simply accept this as the base model.
+
+\begin{examprioritybox}
+The four pillars introduced here---compiled language, memory safety by design, C-like performance, and ownership---form the conceptual skeleton of Rust. Exam questions frequently ask you to explain \emph{why} Rust is suitable for systems programming, and the answer always traces back to these four properties.
+
+\textbf{Expected Mastery Level:} High. Be able to articulate each pillar and how they interrelate.
+\end{examprioritybox}
+
+% ============================================================
+\section{The Toolchain: rustc, Cargo, and rustup}
+% ============================================================
+
+From an operational point of view, you need specific tools installed on your machine to develop in Rust.
+
+\subsection{The Compiler: rustc}
+
+The basic piece required to write a Rust program is the compiler, called \texttt{rustc}. You \emph{could} invoke it directly---nobody would prevent you---but normally you would never call it directly. Why? Because you use \texttt{cargo}, which does everything for you in a cleaner and more convenient way.
+
+The professor showed that \texttt{rustc} can be called by passing it the name of the \texttt{.rs} file to compile, specifying what it should generate, and so on---``nothing ambiguous, just like compiling with the C compiler.'' However, this manual invocation is almost never done in practice.
+
+\subsection{Installing the Toolchain: rustup}
+
+To get \texttt{cargo} and \texttt{rustc} on your PC, go to the website \texttt{https://rustup.rs}. There you will find instructions tailored to your platform. The page automatically detects your operating system and provides the appropriate installer. Setup time is usually about 5 minutes.
+
+The professor described the experience: ``The page automatically says `I see you have a wonderful Windows 11 PC. Click here to download.' Or `You have a Linux PC with X86, click here,' etc. It gives you detailed instructions on what to do.''
+
+\begin{insightbox}
+The professor noted that on Windows, the installer may ask whether you want to use the Microsoft compilation chain (MSVC---the linker used by Visual Studio) or the GNU toolchain (GCC). Both are quite equivalent. If you already have the Microsoft ecosystem installed, choose MSVC. The GNU-GCC environment on Windows works well in some cases, less so in others. The professor's advice: ``Do whatever you want, as long as you arrive with a working environment.''
+\end{insightbox}
+
+\subsection{The Build System: Cargo}
+
+Cargo is Rust's project manager and build system. It is analogous to what \texttt{npm}, \texttt{yarn}, or \texttt{pnpm} are for JavaScript (as used in Web Application courses), or what \texttt{Maven} and \texttt{Gradle} are for Java. Cargo is a powerful, articulated tool that handles:
+
+\begin{itemize}
+    \item Creating project scaffolding
+    \item Downloading libraries automatically when you declare them as dependencies
+    \item Managing versions
+    \item Compiling the project
+    \item Running tests
+    \item Formatting code
+\end{itemize}
+
+The professor described it vividly: ``You simply write `I need these libraries,' and Cargo says `Don't worry, I'll fetch them, put them in the right place, and do everything you need.'\,''
+
+\subsubsection{Essential Cargo Commands}
+
+\begin{center}
+\begin{tabular}{|l|p{10cm}|}
+\hline
+\textbf{Command} & \textbf{Description} \\
+\hline
+\texttt{cargo new <name>} & Creates a new project folder with the minimum scaffolding needed: a \texttt{src/} directory containing \texttt{main.rs}, and a \texttt{Cargo.toml} file. Be careful: if a folder with that name already exists, Cargo will refuse. \\
+\hline
+\texttt{cargo build} & Compiles the project and produces the artifact (executable or library) in \texttt{target/debug/}. \\
+\hline
+\texttt{cargo build --release} & Compiles with optimizations, producing the artifact in \texttt{target/release/}. The release version strips debugging information and unnecessary overhead for optimal performance. \\
+\hline
+\texttt{cargo run} & Builds the project (if necessary) and immediately executes the binary. If sources have changed since the last build, Cargo detects the discrepancy and recompiles automatically. \\
+\hline
+\texttt{cargo check} & Verifies that the code would compile without actually generating the final binary. Useful for large projects where full code generation is slow---gives you a quick idea of whether your code is correct. \\
+\hline
+\texttt{cargo test} & Runs the project's tests: \textbf{unit tests} (testing individual functions), \textbf{integration tests} (testing broader interactions), and \textbf{documentation tests} (code examples embedded in doc comments using \texttt{///}). \\
+\hline
+\texttt{cargo fmt} & Reformats the entire project according to the community's standard style guidelines: 4-space indentation, opening braces on the same line (not on the next line), etc. \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Documentation Tests in Detail}
+
+The professor elaborated on documentation tests: within documentation comments (written with \texttt{///} or similar notation), beyond describing ``this method does X, parameter 1 means Y, parameter 2 means Z''---everything you normally write in documentation---you can also embed runnable code examples. These code examples serve a dual purpose: they help people reading the documentation understand how to use the API, and they are also executed by \texttt{cargo test} to ensure the examples remain correct as the codebase evolves.
+
+\begin{insightbox}
+The professor demonstrated \texttt{cargo fmt} live by deliberately messing up the formatting of a file, then running the command to instantly restore it. He explained the rationale: ``The opening brace goes on the same line, not on a new line, because vertical space is limited. I can keep my code more compact, which means I can see and understand more lines at once. When you put the opening brace on a new line, you eat a row for nothing.''
+\end{insightbox}
+
+\begin{warningbox}
+\texttt{cargo run} only works for executable projects. If your project is a library (created with \texttt{cargo new --lib}), \texttt{cargo run} will fail because there is no \texttt{main} function---``someone else needs to call it.''
+\end{warningbox}
+
+\subsubsection{Live Terminal Workflow Demonstration}
+
+The professor demonstrated the complete build-and-run cycle in a terminal session. This workflow is essential to internalize:
+
+\begin{lstlisting}[language=bash]
+# Step 1: Compile the project
+$ cargo build
+
+# Step 2: Inspect the output
+$ ls -l target/debug/
+# ... many temporary files and folders ...
+# ... r1   (the executable, named after the project)
+
+# Step 3: Run the executable directly
+$ ./target/debug/r1
+Hello, Rust!
+
+# Step 4: Or, more conveniently, use cargo run
+$ cargo run
+Hello, Rust!
+\end{lstlisting}
+
+The key insight from the demonstration was how \texttt{cargo run} detects staleness: ``If I change my source file and then rewrite \texttt{cargo run}, it says: `Oh wait. There's a discrepancy. There's already an executable, but it's older than your source file. Wait a minute. I'll recompile the source, redo the executable, and then launch it.' This is the reason why we don't call the compiler by hand, because it's much more convenient.''
+
+% ============================================================
+\section{IDE Setup and the Cargo.toml File}
+% ============================================================
+
+The professor demonstrated using \textbf{RustRover}, a JetBrains IDE available free to Politecnico di Torino students through the JetBrains academic license (renewable annually while enrolled). Alternatively, \textbf{Visual Studio Code} with the \texttt{rust-analyzer} plugin works well.
+
+\begin{insightbox}
+The professor noted that if using Visual Studio Code, you need to install the Rust plugin (rust-analyzer) which provides syntax highlighting, error detection, and other essential features: ``If you use Visual Studio Code, you have to install the relative plugin for Rust compilation, which colors the syntax correctly and does all these things.''
+\end{insightbox}
+
+The project he created was called \texttt{r1} (``the first Rust project we're doing''). After creation, the interface shows:
+
+\begin{itemize}
+    \item The \texttt{src/} folder with \texttt{main.rs}
+    \item The \texttt{target/} folder (created after the first build)
+    \item The \texttt{Cargo.toml} file describing the project
+\end{itemize}
+
+\subsection{The Cargo.toml File}
+
+In its minimal form, \texttt{Cargo.toml} contains:
+
+\begin{lstlisting}[language=Rust]
+[package]
+name = "r1"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+\end{lstlisting}
+
+\subsubsection{Rust Editions}
+
+Rust releases \textbf{macro editions} every three years: 2015 (the first), 2018, 2021, and now 2024 (which will last until 2027). Each edition can introduce syntactic changes. Separately, the compiler itself receives a new release \textbf{every six weeks}. The professor noted with amusement: ``In the entire history of Rust, from 2015 to now, there was only one time when it wasn't exactly six weeks---because of some political mess in a country, there was a difference of one day. But otherwise, for 11 years, every six weeks, a new version.'' Each new compiler version is fully backward-compatible and adds features that have been incubated and stabilized over a long period.
+
+\begin{insightbox}
+The professor emphasized the stability guarantee: new features added to Rust are ``pieces that have been incubated for a long time before being approved. This is to guarantee to the developers that when they start using a new feature, that one is a stable feature.'' This long incubation period is what allows Rust to maintain backward compatibility while still evolving.
+\end{insightbox}
+
+\subsubsection{Adding Dependencies}
+
+The \texttt{[dependencies]} section is where you declare external libraries. For example, to use \texttt{clap} (a library for command-line argument parsing):
+
+\begin{lstlisting}[language=Rust]
+[dependencies]
+clap = "2.34.0"
+\end{lstlisting}
+
+The moment you save and run \texttt{cargo build}, Cargo automatically fetches the library from \texttt{crates.io} (the official Rust package registry) and places it in the project. The professor demonstrated this live, and the IDE immediately underlined the dependency with a warning: ``You've added it, but you're not using it. What did you add it for?'' This illustrates how the Rust compilation ecosystem actively helps you keep your project consistent---unused dependencies produce warnings.
+
+The professor also showed that when typing the dependency name, the IDE auto-suggests available versions: ``Starting to write, he suggests to me: `Look, we are at version 2.34.0.' Wonderful.'' The library is downloaded from \texttt{crates.io} and placed in the project's ``external libraries'' folder.
+
+% ============================================================
+\section{Rust Terminology: Crate, Module, Package}
+% ============================================================
+
+Working with Rust introduces terminology that differs from what you may be used to in Java or Python.
+
+\begin{center}
+\begin{tabular}{|l|p{10cm}|}
+\hline
+\textbf{Term} & \textbf{Meaning} \\
+\hline
+\textbf{Crate} & The unit of compilation. A crate can be a standalone executable binary or a library. It is fundamentally ``a compilable module.'' An executable crate is standalone---you can run it as-is. A library crate offers methods that someone else will call. Both fall under the generic term ``crate.'' \\
+\hline
+\textbf{Module} & A confined portion of Rust code within a crate. Analogous to a Java package. Modules serve two purposes: (1) partitioning the codebase into simpler, organized parts, and (2) acting as the \textbf{unit of encapsulation}. Everything inside a module is visible to other items in the same module. To make something accessible \emph{outside} the module, you must prefix it with the \texttt{pub} keyword. \\
+\hline
+\textbf{Package} & Your entire project. Created by \texttt{cargo new}, described by \texttt{Cargo.toml}, and containing one or more crates. \\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{insightbox}
+The professor compared modules to Java packages: ``When you create a package in Java, you partition your classes into subpackages for convenience, to keep related things close together. In Rust, the module does the same, but it is also the unit of encapsulation. Everything not preceded by \texttt{pub} is visible only inside the module.''
+\end{insightbox}
+
+Modularity in Rust is expressed in the file system. Each source file in the \texttt{src/} directory can become a module. You can also create modules directly inside a single source file, but the professor noted ``it's not a great idea'' for larger projects. When you want to divide your codebase into multiple files, each file becomes a module that must be named and imported---similar to how in Java you use \texttt{import} to access classes from another package.
+
+% ============================================================
+\section{Project Physical Structure on Disk}
+% ============================================================
+
+% AI-IMAGE-REQUEST: A directory tree diagram showing the structure of a Rust project after cargo build: my_package/ at root, containing Cargo.toml, src/ with main.rs inside, and target/ containing debug/ (with the executable and temporary files) and release/ (with the optimized executable).
+
+When you execute \texttt{cargo new my\_package}, the following structure is created:
+
+\begin{lstlisting}[language=bash]
+my_package/
+  |-- Cargo.toml
+  |-- src/
+       |-- main.rs
+\end{lstlisting}
+
+The professor described the minimal contents: ``Inside the \texttt{src} folder, you find \texttt{main.rs}, which is the entry point of our program. And there is a file \texttt{Cargo.toml}, which describes the project. You can eventually add other files in \texttt{src/} that will become your modules.''
+
+After running \texttt{cargo build}, a \texttt{target/} folder appears:
+
+\begin{lstlisting}[language=bash]
+my_package/
+  |-- Cargo.toml
+  |-- src/
+  |    |-- main.rs
+  |-- target/
+       |-- debug/
+            |-- my_package      (executable on Mac/Linux)
+            |-- my_package.exe  (executable on Windows)
+            |-- ... (temporary compilation files)
+\end{lstlisting}
+
+On Mac or Linux, the executable has no extension; on Windows, it has \texttt{.exe}. If instead you run \texttt{cargo build --release}, a \texttt{target/release/} folder is created with the optimized binary.
+
+\subsection{Debug vs. Release Builds}
+
+\begin{center}
+\begin{tabular}{|l|p{5.5cm}|p{5.5cm}|}
+\hline
+& \textbf{Debug Build} & \textbf{Release Build} \\
+\hline
+\textbf{Command} & \texttt{cargo build} & \texttt{cargo build --release} \\
+\hline
+\textbf{Output directory} & \texttt{target/debug/} & \texttt{target/release/} \\
+\hline
+\textbf{Binary size} & Larger (debug symbols included) & Smaller (stripped) \\
+\hline
+\textbf{Runtime checks} & Includes extra internal checks for diagnostics during development & All unnecessary overhead removed \\
+\hline
+\textbf{Performance} & Not optimized & Fully optimized \\
+\hline
+\textbf{Use case} & Development and debugging & Distribution to users \\
+\hline
+\end{tabular}
+\end{center}
+
+The professor summarized the workflow: ``You develop using debug builds, always, until you have enough confidence that your program meets the required characteristics. At that point, you build the release version to distribute the executable in its optimal format.''
+
+% ============================================================
+\section{Your First Rust Program: Functions, Macros, and Printing}
+% ============================================================
+
+\subsection{The Entry Point: \texttt{fn main()}}
+
+Functions in Rust are introduced by the keyword \texttt{fn}, followed by a name and optionally parameters. The entry point of every executable Rust program is \texttt{main}:
+
+\begin{lstlisting}[language=Rust]
+fn main() {
+    println!("Hello, Rust!");
+}
+\end{lstlisting}
+
+In this case, \texttt{main} has no parameters and returns nothing. In C you would write \texttt{void main()}. In Rust, if you want to be explicit, you can write the return type as \texttt{-> ()}, which reads as ``arrow unit''---a type that contains nothing, representing the absence of value. When a function does not return anything, you can either write \texttt{-> ()} or simply omit the return type entirely; they are equivalent.
+
+\begin{lstlisting}[language=Rust]
+fn main() -> () {  // Explicit "returns nothing"
+    println!("Hello, Rust!");
+}
+\end{lstlisting}
+
+The return value of a function is expressed with the arrow notation: \texttt{-> ReturnType}. For example, if \texttt{main} needed to return an \texttt{i32}, you would write \texttt{-> i32}. However, the professor immediately noted two problems with this: (1) the function body is not returning an \texttt{i32}, and (2) \texttt{main} has special constraints on what it can return.
+
+\begin{warningbox}
+The professor explained that \texttt{main} is special: ``This confuses the compiler with the fact that it \emph{knows} \texttt{main}, because \texttt{main} is the entry point of our program.'' The \texttt{main} function has restrictions on its return type---it can return \texttt{()}, \texttt{Result<(), E>}, or certain other specific types, but not arbitrary types like \texttt{i32}.
+\end{warningbox}
+
+\subsection{Macros vs. C Preprocessor}
+
+The \texttt{println!} call has an exclamation mark \texttt{!} after the name. This signals that it is a \textbf{macro}, not a regular function. The professor drew a detailed comparison with C:
+
+In C, you can write \texttt{\#define NULL ((void*)0)}. The C preprocessor, before the compiler processes anything, finds the symbol \texttt{NULL} and replaces it with its expansion---raw text substitution. The professor described this limitation: ``The C preprocessor operates at the level of character sequences. It searches for words and replaces them. It's like doing Find and Replace in your text editor---if the resulting sentence doesn't make sense, too bad.''
+
+Rust macros are fundamentally different. They have \textbf{full visibility of the syntax tree} and can only generate \textbf{syntactically correct code}. The professor emphasized: ``The substantial difference is that macros in Rust have full visibility of the syntax and can only generate syntactically correct code. The C preprocessor operates at the level of character sequences and can replace characters with others without understanding what they mean.''
+
+The professor added a reassuring note for students: ``The code we write is not necessarily what the compiler compiles. This should not surprise any of you who have done a minimum of things in C''---referring to how the C preprocessor already transforms code before compilation, but Rust macros do it in a much safer, syntax-aware manner.
+
+\begin{warningbox}
+Do not confuse Rust macros (invoked with \texttt{!}) with C preprocessor macros. Rust macros are hygienic and type-aware; C macros are blind text substitution. This is a frequent exam concept.
+\end{warningbox}
+
+\subsection{Printing: \texttt{print!}, \texttt{println!}, \texttt{eprint!}, \texttt{eprintln!}}
+
+Every program has two output streams available:
+\begin{itemize}
+    \item \textbf{Standard output} (\texttt{stdout}): for messages destined for the user.
+    \item \textbf{Standard error} (\texttt{stderr}): for communicating errors.
+\end{itemize}
+
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Macro} & \textbf{Stream} & \textbf{Newline?} \\
+\hline
+\texttt{print!} & stdout & No \\
+\texttt{println!} & stdout & Yes \\
+\texttt{eprint!} & stderr & No \\
+\texttt{eprintln!} & stderr & Yes \\
+\hline
+\end{tabular}
+\end{center}
+
+The professor explained why both streams exist: ``When we automate our program in a Bash script, we have the possibility to look at what happens in stdout versus stderr, to decide whether to continue the pipeline or not. This is part of the general conventions of how a program behaves in the context of an operating system with scripting.''
+
+When running from the console, stdout and stderr are both displayed on the same terminal, so they appear indistinguishable. But if you redirect output with pipes, you would see them separately.
+
+\begin{insightbox}
+The professor clarified the behavior of \texttt{print!} (without ``ln''): ``If I call \texttt{print!} multiple times, things appear one next to the other''---i.e., without newlines. This is useful when you need to build output incrementally on the same line.
+\end{insightbox}
+
+\subsection{Format Placeholders: \texttt{\{\}} and \texttt{\{:?\}}}
+
+Inside the format string, curly braces \texttt{\{\}} act as placeholders that are filled by subsequent arguments:
+
+\begin{lstlisting}[language=Rust]
+fn main() {
+    let i = 42;
+    println!("{}", i);          // Prints: 42
+    println!("{} {}", 3.14, i); // Prints: 3.14 42
+}
+\end{lstlisting}
+
+The placeholders are positional: the first \texttt{\{\}} is filled by the first argument after the format string, the second \texttt{\{\}} by the second argument, and so on. The professor demonstrated the macro's syntax awareness: ``If you put two expansion points \texttt{\{\}} but only provide one value after the format string, the macro immediately marks it with a red error---`two expansion points but only one value.' This is the macro enforcing our syntax.''
+
+\begin{insightbox}
+The professor compared Rust's two formatting families to Java's \texttt{toString()} mechanism. In Java, all objects inherit \texttt{toString()} from \texttt{Object}, but most implementations produce unhelpful output like \texttt{ClassName@hashcode}. Rust divides values into two families:
+\begin{itemize}
+    \item \textbf{Display} (\texttt{\{\}}): A clean, user-facing representation. Used for types that offer a polished way to show themselves.
+    \item \textbf{Debug} (\texttt{\{:?\}}): A programmer-facing representation. Used for inspection and debugging, available for types that may not have a user-friendly display.
+\end{itemize}
+The professor noted: ``The number doesn't change---it's the same. But I can use different notation inside the braces.'' For simple types like numbers, both Display and Debug produce the same output. For complex types, the distinction becomes critical.
+\end{insightbox}
+
+% ============================================================
+\section{Variables, Mutability, and the Principle of Minimum Privilege}
+% ============================================================
+
+\subsection{Introducing Variables with \texttt{let}}
+
+Variables in Rust are introduced by the keyword \texttt{let}:
+
+\begin{lstlisting}[language=Rust]
+let i = 42;
+\end{lstlisting}
+
+If you provide an initialization value, the compiler can \textbf{infer the type} automatically. In this case, \texttt{i} is inferred to be \texttt{i32} (the default integer type). You can also specify the type explicitly:
+
+\begin{lstlisting}[language=Rust]
+let i: i32 = 42;
+\end{lstlisting}
+
+\subsection{Immutability by Default}
+
+Variables introduced with \texttt{let} are \textbf{immutable by default}. Attempting to reassign them produces a compile-time error:
+
+\begin{lstlisting}[language=Rust]
+let i = 42;
+i = i + 1; // ERROR: cannot assign twice to immutable variable 'i'
+\end{lstlisting}
+
+The professor demonstrated this live: ``I wrote \texttt{i = 42} and then tried \texttt{i = i + 1}. It becomes underlined with red. The error says: `Cannot assign a new value to an immutable variable.' Since we said just \texttt{let}, for Rust, \texttt{i} is immutable. It's worth 42, always. Don't change it.''
+
+To allow mutation, you must explicitly add the \texttt{mut} keyword:
+
+\begin{lstlisting}[language=Rust]
+let mut i = 42;
+i = i + 1; // This is fine
+\end{lstlisting}
+
+\begin{examprioritybox}
+\textbf{The Principle of Minimum Privilege:} The professor stated this principle clearly: ``If you don't need to do something, don't do it. And to be sure you don't do it, make it impossible by default.'' Variables start at the minimum privilege level (immutable). If you need more power (mutability), you must ask for it explicitly with \texttt{mut}. This prevents you from having powers you don't exercise with awareness, because ``powers you wield without awareness are dangerous---you use them without realizing it.''
+
+\textbf{Expected Mastery Level:} Very High. You must reflexively know when to use \texttt{let} versus \texttt{let mut}.
+\end{examprioritybox}
+
+\subsection{Deep Immutability: The Difference from Java's \texttt{final}}
+
+The concept of immutability in Rust is \textbf{much deeper} than what Java's \texttt{final} provides. The professor used a concrete comparison:
+
+In Java, \texttt{final} means \textbf{non-reassignable}, not immutable. You can write:
+
+\begin{lstlisting}[language=Java]
+final ArrayList<Integer> al = new ArrayList<>();
+// al = new ArrayList<>();  // ERROR: cannot reassign
+al.add(27);                 // FINE: can modify contents!
+\end{lstlisting}
+
+The \texttt{final} keyword prevents you from assigning a different object to \texttt{al}, but it does \emph{not} prevent you from calling \texttt{al.add(27)} to modify the contents.
+
+In Rust, if you declare the equivalent (a \texttt{Vec}) without \texttt{mut}:
+
+\begin{lstlisting}[language=Rust]
+let v: Vec<i32> = Vec::new();
+// v = Vec::new();  // ERROR: cannot reassign
+// v.push(42);      // ERROR: cannot mutate - v is immutable!
+\end{lstlisting}
+
+The professor demonstrated this: ``Not only can you not reassign \texttt{v} to a different vector---you've frozen it to be \emph{this} vector---but you also cannot tamper with it, cannot do things that change its internal content, because \texttt{v} is immutable and frozen there.''
+
+To be able to push elements, you must declare the vector as mutable:
+
+\begin{lstlisting}[language=Rust]
+let mut v: Vec<i32> = Vec::new();
+v.push(42); // Now this is fine
+\end{lstlisting}
+
+\begin{warningbox}
+\textbf{Rust's \texttt{let} $\neq$ Java's \texttt{final}.} Java's \texttt{final} prevents reassignment but allows content modification. Rust's \texttt{let} (without \texttt{mut}) freezes the entire data structure---neither reassignment nor internal mutation is allowed. This distinction is a classic exam pitfall.
+\end{warningbox}
+
+\subsection{No \texttt{++} or \texttt{--} Operators}
+
+Rust deliberately omits the pre-increment (\texttt{++i}) and post-increment (\texttt{i++}) operators. The professor explained why: historically, the confusion between pre-increment and post-increment has been a significant source of bugs in C/C++ codebases. ``People forget it after a while. When they do \texttt{a = i++} they start making mistakes, because in a superficial reading you say `yes, it's one more' but you don't think carefully about whether the increment happens before or after the use.'' This has been shown to be a significant source of bugs in historically analyzed codebases.
+
+Rust's decision: remove them entirely. To increment a value:
+
+\begin{lstlisting}[language=Rust]
+let mut i = 0;
+i += 1; // Clear, explicit, unambiguous
+\end{lstlisting}
+
+The professor noted this ``makes it obvious what you're doing, and especially prevents you from accidentally assigning the result to someone else.'' He specifically advised writing the increment on a separate line to keep code clear and avoid confusion.
+
+% ============================================================
+\section{Blocks, Semicolons, and Expressions}
+% ============================================================
+
+Rust is an \textbf{expression-oriented language}. Almost everything evaluates to a value. This includes constructs that in C or Java are mere statements: \texttt{if}, \texttt{loop}, and even bare blocks.
+
+\subsection{Scoping with Blocks}
+
+You can enclose code in curly braces to create a new scope. Variables declared inside the inner block are limited to that block's visibility, as in most other languages:
+
+\begin{lstlisting}[language=Rust]
+fn main() {
+    let x = 10;
+    {
+        let y = 20;
+        println!("{}", x + y); // Fine: both x and y visible
+    }
+    // println!("{}", y); // ERROR: y is not visible here
+}
+\end{lstlisting}
+
+\subsection{The Semicolon Rule}
+
+The semicolon has a crucial semantic role in Rust. The professor explained it this way:
+
+\begin{itemize}
+    \item \textbf{With semicolon}: The value produced by the expression is \textbf{discarded}. The line becomes a statement.
+    \item \textbf{Without semicolon} (on the last line of a block): The value produced becomes the \textbf{return value of the block}.
+\end{itemize}
+
+\begin{lstlisting}[language=Rust]
+fn square(a: i32) -> i32 {
+    a * a   // No semicolon: this value IS the return value
+}
+\end{lstlisting}
+
+The professor walked through this: ``The body is simply \texttt{a * a}, without a semicolon and without \texttt{return}. It recalculates this multiplication and considers this value---since there is no semicolon---as the value of the block. And what is this block? The block of the function. Therefore, the value of the function.''
+
+\begin{insightbox}
+\textbf{The \texttt{return} keyword is optional.} The professor deliberately highlighted that this function uses ``no semicolon \emph{and no} \texttt{return}.'' In Rust, the idiomatic way to return a value from a function is to make it the last expression without a semicolon. The \texttt{return} keyword exists but is typically reserved for early returns (exiting a function before the last line). Writing \texttt{return a * a;} would also work but is not considered idiomatic Rust style.
+\end{insightbox}
+
+\begin{warningbox}
+The semicolon can only be meaningfully omitted on the \textbf{last line} of a block. If you had more instructions after it, those wouldn't execute (the function would already have a return value). So the semicolon is used on most lines; on the last line, it depends on whether you want to return a value.
+\end{warningbox}
+
+\subsection{If-Else as an Expression}
+
+Since \texttt{if-else} produces a value, you can use it directly in assignments:
+
+\begin{lstlisting}[language=Rust]
+let mut v: Vec<i32> = Vec::new();
+v.push(5);
+
+let i = if v.is_empty() { 0 } else { 1 };
+println!("i = {}", i); // Prints: i = 1
+\end{lstlisting}
+
+Note that the values \texttt{0} and \texttt{1} inside the branches do \emph{not} have semicolons, because they are the return values of the respective blocks. The overall \texttt{if-else} expression produces a value that gets assigned to \texttt{i}.
+
+The professor demonstrated this live, building the example step by step: ``I created the vector, I put something in it, then I have an \texttt{if}. And I say: if the vector is empty, put 0; else, put 1. Note that 0 and 1 don't have the semicolon, because I need them as a return value and, entering this pattern, I will assign the result to \texttt{i}.''
+
+% ============================================================
+\section{Primitive Types and Numeric Representation}
+% ============================================================
+
+% AI-IMAGE-REQUEST: A table/chart showing all Rust primitive numeric types: i8, i16, i32, i64, i128, isize on the signed side, u8, u16, u32, u64, u128, usize on the unsigned side, and f32, f64 for floating point. Show their sizes in bits and value ranges.
+
+\subsection{The Problem with C's \texttt{int}}
+
+The professor motivated Rust's type system by contrasting it with C. In C, the standard defines \texttt{int} but does not define its size precisely---it depends on the platform. ``You don't know how short it is, how long it is. This has brought big problems in writing compatible programs across platforms.'' To work around this, C programmers often use \texttt{int32\_t} from \texttt{<stdint.h>}, which is a \texttt{typedef} that guarantees exactly 32 bits. The professor gave the full picture: ``Often, programmers don't use the basic \texttt{int} type. They replace it with \texttt{int32\_t}, which is a define that easily allows you to modify the architecture and say `I want an 8-bit integer, I want an unsigned 8-bit integer.' This is how you do things in C to make them multi-compilable on a different platform without going crazy.''
+
+Rust solves this problem at the root: all numeric types have \textbf{explicit, fixed sizes}.
+
+\subsection{Integer Types}
+
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Type} & \textbf{Size} & \textbf{Range} \\
+\hline
+\texttt{i8} & 8 bits & $-128$ to $127$ \\
+\texttt{u8} & 8 bits & $0$ to $255$ \\
+\texttt{i16} & 16 bits & $-32{,}768$ to $32{,}767$ \\
+\texttt{u16} & 16 bits & $0$ to $65{,}535$ \\
+\texttt{i32} & 32 bits & $\approx -2$ billion to $+2$ billion \\
+\texttt{u32} & 32 bits & $0$ to $\approx 4$ billion \\
+\texttt{i64} & 64 bits & very large range \\
+\texttt{u64} & 64 bits & very large range \\
+\texttt{i128} & 128 bits & enormous range \\
+\texttt{u128} & 128 bits & enormous range \\
+\texttt{isize} & architecture-dependent & 32 or 64 bits \\
+\texttt{usize} & architecture-dependent & 32 or 64 bits \\
+\hline
+\end{tabular}
+\end{center}
+
+The default integer type, when no annotation is given, is \texttt{i32}---``enough for most operations.'' You can force a specific type with a suffix:
+
+\begin{lstlisting}[language=Rust]
+let a = 42;       // i32 (default)
+let b = 42u32;    // u32 (unsigned 32-bit)
+let c = 42u8;     // u8  (0 to 255)
+\end{lstlisting}
+
+The professor demonstrated the suffix notation live: ``If we want, we can add a suffix. \texttt{u32} only---and it automatically converted it into a 42 unsigned. You want to do it as a byte? \texttt{u8}. Okay, this one goes from 0 to 255.''
+
+\subsection{Floating-Point Types}
+
+\begin{lstlisting}[language=Rust]
+let x = 1.32;       // f64 (default): 64-bit, ~16 significant digits
+let y: f32 = 1.32;  // f32: 32-bit, ~5 significant digits
+\end{lstlisting}
+
+The professor noted: ``\texttt{f64} represents numbers up to about $10^{306}$ with 16 significant digits after the decimal point. \texttt{f32} occupies 4 bytes and represents numbers up to about $10^{38}$ with only 5 significant digits in exponential notation.''
+
+\subsection{Special Types: \texttt{isize}, \texttt{usize}, \texttt{bool}, \texttt{char}}
+
+\textbf{\texttt{isize} and \texttt{usize}}: These indicate the default dimension of the current architecture. On a 64-bit machine, \texttt{isize} is equivalent to \texttt{i64}; on a 32-bit machine, to \texttt{i32}. The professor explained why they're useful by connecting to a fundamental concept from C: ``A pointer is an integer to all effects, whose dimension depends on the dimension of the machine's architecture. So when we need alignment or memory occupation optimized for a certain machine, we can refer to \texttt{usize} or \texttt{isize} to represent the optimal data for the current machine.'' This \textbf{pointer--integer equivalence} is the reason these architecture-dependent types exist.
+
+\textbf{\texttt{bool}}: The boolean type (\texttt{true} or \texttt{false}).
+
+\textbf{\texttt{char}}: A character type that occupies \textbf{four bytes}. The professor emphasized: ``Why four bytes? Because it can represent all Unicode values. The Unicode symbols are millions, and therefore need a 32-bit representation.''
+
+\begin{warningbox}
+The fact that \texttt{char} is 32 bits does \textbf{not} mean that each character in a string occupies 32 bits! Strings in Rust use \textbf{UTF-8 encoding}, which is a variable-length encoding. An ASCII character like \texttt{'A'} occupies 1 byte (value 65 or 0x41). An accented letter like \texttt{'è'} occupies 2 bytes. A Chinese ideogram occupies 3 bytes. An emoji occupies 4 bytes. So a string of three characters can be 3 bytes long or 12 bytes long, depending on which characters are inside.
+\end{warningbox}
+
+\begin{insightbox}
+The professor explained the UTF-8 encoding mechanism in detail: ``In a single byte, there are 128 symbols of ASCII coded, plus some extension symbols. In Unicode, a first prefix is used to say `Look, this character is longer, the real value is in the second byte.' And then you can find accented letters there. Chinese ideograms need three bytes. If you want to put a smiley or a cake emoji, those need 4 bytes.'' This is why Rust strings have a length in bytes that is \emph{not identical} to the length in characters.
+\end{insightbox}
+
+\subsection{The Unit Type \texttt{()}}
+
+The empty parentheses \texttt{()} represent the \textbf{unit type}---equivalent to \texttt{void} in other languages. It represents the absence of value.
+
+\subsection{Underscores in Numeric Literals}
+
+For readability, you can use underscores as visual separators in numeric literals:
+
+\begin{lstlisting}[language=Rust]
+let big = 1_000_000;       // Same as 1000000
+let weird = 1_0_0_0_0_0_0; // Also valid, but don't do this
+\end{lstlisting}
+
+The underscore is simply ignored by the compiler. You can place it anywhere within the number, not just in groups of three. ``You can put it 27 times in a row if you want. It's useful just for readability.''
+
+\subsection{Type Annotations and Type Inference}
+
+Variables can have their type explicitly annotated with \texttt{: Type} after the name:
+
+\begin{lstlisting}[language=Rust]
+let v: i32 = 123;
+let mut w = v;   // w inferred as i32 (same as v), mutable
+\end{lstlisting}
+
+The compiler can usually infer the type from the initialization value. However, in some cases inference is impossible. The professor gave the example of an empty vector: ``All empty vectors look the same. How can the compiler know if it's an empty vector of integers, or strings, or something else? In that case, you must tell it.''
+
+\begin{lstlisting}[language=Rust]
+let v: Vec<i32> = Vec::new();  // Must specify type
+let v2 = vec![5, 6, 7];        // Inferred as Vec<i32>
+\end{lstlisting}
+
+The professor elaborated on the inference for initialized vectors: ``If I had initialized the vector with numbers, say \texttt{vec![5, 6, 7]}, the compiler automatically sees that I put in 5 and 6 and 7, and says `oh well, it's an integer vector, fine.' ''
+
+\begin{insightbox}
+The professor showed an important subtlety about type annotations and immutability working together:
+\begin{lstlisting}[language=Rust]
+let v: i32 = 123;
+// v = -5;          // ERROR: v is immutable
+let mut w = v;      // w gets value 123, but w is mutable
+w = -5;             // Fine: w is mutable
+\end{lstlisting}
+The type of \texttt{w} is inferred from \texttt{v} (i.e., \texttt{i32}), and since \texttt{w} is declared with \texttt{mut}, its value can change. This demonstrates how type inference and mutability are orthogonal concepts.
+\end{insightbox}
+
+% ============================================================
+\section{Expressions Produce Values}
+% ============================================================
+
+The professor emphasized that in Rust, ``all expressions produce a value.'' This is different from C and Java, where many constructs (like \texttt{if} and \texttt{while}) do not produce values. In Rust, even \texttt{loop} is an expression that can return a value via \texttt{break}:
+
+\begin{lstlisting}[language=Rust]
+let mut counter = 0;
+let result = loop {
+    counter += 1;
+    if counter == 10 {
+        break counter * 2; // Loop returns 20
+    }
+};
+println!("result = {}", result); // Prints: result = 20
+\end{lstlisting}
+
+The professor explained the \texttt{break} mechanism: ``That \texttt{break} there not only interrupts the infinite cycle, but allows me to indicate what the value is that the loop is returning.''
+
+\subsection{Loops: \texttt{loop}, \texttt{for}, \texttt{while}}
+
+\texttt{loop} creates an infinite loop. You exit with \texttt{break}, optionally returning a value.
+
+\texttt{for} iterates over iterable objects:
+
+\begin{lstlisting}[language=Rust]
+let array = ["a", "b", "c"];
+for s in array {
+    println!("{}", s);
+}
+\end{lstlisting}
+
+An iterable object is something that can be converted into an \textbf{iterator}---``something that allows you to go through pieces one after the other.'' The professor noted: ``We need an iterable object. That is, an object that can be converted---whether it is already an iterator or convertible into an iterator. What is an iterator? We will learn it, but intuitively, it is something that allows us to go through the pieces one after the other.'' He promised to explain iterators in depth in a later lecture.
+
+\texttt{while} works as in other languages, looping while a condition holds:
+
+\begin{lstlisting}[language=Rust]
+let mut n = 0;
+while n < 10 {
+    n += 1;
+}
+\end{lstlisting}
+
+% ============================================================
+\section{Pattern Matching with \texttt{match}}
+% ============================================================
+
+The professor introduced \texttt{match} as the most distinctive and powerful control-flow construct in Rust. He started from what students might already know: ``If you know the \texttt{switch} statement in C or Java---\texttt{switch} allows you to choose based on a value. \texttt{match} does something much more powerful: it lets you choose based not only on \emph{value} but also on \emph{shape}.''
+
+He expanded on this: ``When I have the possibility to ask for a match on a value, I can say: if it matches a value with one element, or two elements, or five elements, or three elements in which the second is two. All these things I can write as a condition. And manage them.''
+
+\subsection{Basic Value Matching}
+
+\begin{lstlisting}[language=Rust]
+let item = 15;
+let s = match item {
+    0 => "zero",
+    10..=20 => "between 10 and 20",
+    40 | 80 => "40 or 80",
+    _ => "other",
+};
+println!("{}", s); // Prints: between 10 and 20
+\end{lstlisting}
+
+This is like an enhanced \texttt{switch}: you can match on exact values (\texttt{0}), ranges (\texttt{10..=20}), alternatives (\texttt{40 | 80}), and a wildcard catch-all (\texttt{\_}).
+
+The professor described this as ``a version of the Switch, a little more powerful. But the most interesting is the structural matching.''
+
+\subsection{Destructuring with \texttt{match}}
+
+The most interesting use is structural pattern matching, where you can ``disassemble'' a value:
+
+\begin{lstlisting}[language=Rust]
+let val: Vec<i32> = vec![5, 10];
+match val.as_slice() {
+    [] => println!("empty"),
+    [a] => println!("one element: {}", a),
+    [a, b] => println!("two elements: {} and {}", a, b),
+    _ => println!("more than two elements"),
+};
+\end{lstlisting}
+
+The professor explained: ``If there's nothing inside, I tell you it's empty. If there's only one element, not only do I tell you there's one element, but I also tell you what it is, because I read it into the variable \texttt{a}. And if there are two, I tell you what they are.'' This is pattern matching not just on values but on the \emph{structure} of data.
+
+\begin{exambox}
+\texttt{match} is Rust's most powerful control-flow construct and replaces both \texttt{switch} and many \texttt{if-else} chains. Expect exam questions asking you to write \texttt{match} expressions that destructure tuples, slices, or \texttt{Option<T>} values. The wildcard \texttt{\_} and the exhaustiveness requirement (all cases must be covered) are frequently tested.
+\end{exambox}
+
+% ============================================================
+\section{String Handling: Slices vs. Owned Strings}
+% ============================================================
+
+% AI-IMAGE-REQUEST: A memory diagram showing two variables side by side. On the left: a &str variable "hello" on the stack as a fat pointer (pointer + length=6) pointing to read-only static memory containing "hello,". On the right: a String variable "s" on the stack with three fields (pointer, length=6, capacity=8) pointing to a heap-allocated buffer containing "hello," with 2 unused bytes.
+
+The professor introduced strings by connecting to students' prior experience: ``I hope you made enough effort during your algorithms course wrestling with C strings and the null terminator, and all the problems that arise when you want to insert one string into another. Only if you went through that struggle can you understand the complexity behind this, and the need to treat it differently.''
+
+\subsection{Java Comparison: String vs. StringBuilder}
+
+Starting from Java (``which you might have more recent memories of''), the professor drew a parallel. In Java:
+\begin{itemize}
+    \item \texttt{String} objects are \textbf{immutable}---you cannot insert or remove characters within them. You can only derive new strings.
+    \item For mutable text manipulation, Java offers \texttt{StringBuilder} (introduced in Java 1.2) with \texttt{insert}, \texttt{delete}, \texttt{replace} methods. (There's also the older \texttt{StringBuffer} from Java 1.0, which is synchronized and slower.)
+\end{itemize}
+
+In Rust, there is something similar, but structured differently.
+
+\subsection{String Slices: \texttt{\&str}}
+
+Immutable strings in Rust are called \textbf{string slices}. Their type is \texttt{\&str} and they are written as string literals in double quotes:
+
+\begin{lstlisting}[language=Rust]
+let hello: &str = "hello,";
+\end{lstlisting}
+
+A \texttt{\&str} is a \textbf{fat pointer}---it contains two pieces:
+\begin{enumerate}
+    \item A \textbf{pointer} to where the bytes of the string start.
+    \item A \textbf{length} indicating how many bytes are in the string (not characters---bytes).
+\end{enumerate}
+
+\begin{memoryblock}
+\textbf{Memory layout of \texttt{let hello: \&str = "hello,";}:}
+
+The string literal \texttt{"hello,"} is known at compile time and will never change. The compiler places it in a \textbf{read-only static memory segment}---a segment with read-only access, no writing allowed.
+
+On the stack, the variable \texttt{hello} is a fat pointer consisting of two fields:
+\begin{itemize}
+    \item \texttt{ptr}: pointer to the first byte of \texttt{"hello,"} in static memory
+    \item \texttt{len}: \texttt{6} (six bytes)
+\end{itemize}
+
+Unlike C strings, there is \textbf{no null terminator}. The length is explicitly stored in the fat pointer.
+\end{memoryblock}
+
+The professor contrasted this with C: ``In C, you have the pointer to the first character, and then you have to dig through memory to find the last one, assuming the string ends with a zero. Here, the fat pointer contains both the pointer \emph{and} a number telling me how many bytes are inside---which is essential for efficient operations.''
+
+\subsection{Owned Strings: \texttt{String}}
+
+Modifiable strings have the type \texttt{String}. They can be:
+\begin{itemize}
+    \item Created empty with \texttt{String::new()}
+    \item Created from a literal with \texttt{String::from("hello")} or \texttt{"hello".to\_string()}
+    \item Manipulated with methods like \texttt{push\_str}, \texttt{insert}, \texttt{replace}, etc.
+\end{itemize}
+
+A \texttt{String} object is stored on the stack but manages a buffer on the \textbf{heap}. Its stack representation contains \textbf{three} fields:
+\begin{enumerate}
+    \item A \textbf{pointer} to the heap buffer
+    \item The current \textbf{length} (bytes in use)
+    \item The total \textbf{capacity} (bytes allocated)
+\end{enumerate}
+
+\subsection{Method Inheritance: \texttt{\&str} Methods on \texttt{String}}
+
+The professor made an important point about the relationship between the methods available on these two types:
+
+\begin{insightbox}
+``The slice type \texttt{\&str} has a plurality of methods to inspect the content of a string. All these methods are automatically inherited---they are available for \texttt{String} as well. And \texttt{String} adds to them its own unique methods, which are those for insertion, cancellation, and substitution.''
+\end{insightbox}
+
+In other words, every operation you can perform on a \texttt{\&str} (such as \texttt{len()}, \texttt{contains()}, \texttt{starts\_with()}, etc.) can also be performed on a \texttt{String}, because \texttt{String} automatically \emph{dereferences} to \texttt{\&str}. On top of those, \texttt{String} adds mutating methods like \texttt{push\_str()}, \texttt{insert()}, \texttt{replace()}, and others. This is why you can think of \texttt{String} as a superset of \texttt{\&str} in terms of available operations.
+
+\subsection{Step-by-Step String Lifecycle}
+
+The professor walked through the complete lifecycle of a \texttt{String} with vivid personification. Let us trace it:
+
+\begin{lstlisting}[language=Rust]
+{
+    let hello: &str = "hello,";
+    let mut s = String::new();
+    s.push_str("hello,");
+    s.push_str(" world");
+    // ... end of scope
+}
+\end{lstlisting}
+
+\begin{memoryblock}
+\textbf{Step 1: \texttt{let mut s = String::new()}}
+
+The \texttt{String} object is created on the stack with: \texttt{ptr = (invalid)}, \texttt{len = 0}, \texttt{capacity = 0}. No heap allocation happens yet.
+
+\textbf{Step 2: \texttt{s.push\_str("hello,")}}
+
+The string says (as the professor personified it): ``You want to place things in me? Hmm, I don't have any space. How many bytes do you want to put in? Six bytes. That's not a power of two---let me round up. What's the next power of two? Eight.'' So the String requests 8 bytes from the heap. The operating system provides the allocation. Now:
+\begin{itemize}
+    \item \texttt{ptr}: points to 8 bytes on the heap
+    \item \texttt{capacity}: 8
+\end{itemize}
+The six characters of ``hello,'' are copied into the buffer:
+\begin{itemize}
+    \item \texttt{len}: 6
+\end{itemize}
+
+\textbf{Step 3: \texttt{s.push\_str(" world")}}
+
+``How many bytes is ` world'? It's 6 bytes. I already have 6 in use, that makes 12 total needed, but my capacity is only 8---not enough! Operating system, what's the next power of two? 16. Operating system, do you have 16 bytes for me?'' The OS provides 16 bytes on the heap. The String copies the old content (``hello,'') into the new buffer, appends `` world'', and frees the old 8-byte buffer. Now:
+\begin{itemize}
+    \item \texttt{ptr}: points to 16 bytes on the heap
+    \item \texttt{len}: 12
+    \item \texttt{capacity}: 16
+\end{itemize}
+
+\textbf{Step 4: End of scope (closing brace)}
+
+When the scope ends, Rust automatically calls the \texttt{drop} method on \texttt{s}. The String ``takes the trouble to go to the operating system and say: `Dear operating system, you gave me 16 bytes---I don't need them anymore, I'm returning them.'\,'' The heap memory is freed.
+
+Then \texttt{hello} (\texttt{\&str}) goes out of scope. It only held a static pointer---no dynamic resources to clean up. ``No problem. We can throw this away without doing anything. Flup!''
+
+The stack is cleaned (obvious), and the heap is also cleaned (less obvious). \textbf{Automatically.}
+\end{memoryblock}
+
+\begin{insightbox}
+The professor described the \texttt{drop} mechanism with a metaphor of a testament: ``The String knows it has taken memory from the operating system and knows it must restore it before it dies. In its little testament, it says: `I leave instructions to return to the operating system whatever it previously gave me.'\,'' This is the Rust equivalent of C++'s RAII pattern---deterministic, automatic resource cleanup without garbage collection.
+\end{insightbox}
+
+\subsection{Converting Between \texttt{\&str} and \texttt{String}}
+
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Direction} & \textbf{Method} & \textbf{Notes} \\
+\hline
+\texttt{\&str} $\to$ \texttt{String} & \texttt{String::from("text")} or \texttt{"text".to\_string()} & Creates a new heap-allocated copy \\
+\hline
+\texttt{String} $\to$ \texttt{\&str} & \texttt{s.as\_str()} or implicit \texttt{\&s} & Borrows as immutable slice, no copy \\
+\hline
+\end{tabular}
+\end{center}
+
+The professor noted: ``It is possible to view a mutable \texttt{String} as an immutable \texttt{\&str}---you freeze it temporarily and say `don't touch it, just look at it.' But you cannot do the reverse: from an immutable string, you can only create a \emph{new} mutable copy.''
+
+The professor also highlighted that the two conversion methods from \texttt{\&str} to \texttt{String} are equivalent: ``\texttt{String::from("rust")} and \texttt{"rust".to\_string()} are equivalent---in both cases, starting from this sequence of characters, I generate a \texttt{String} object that contains a copy of those characters, but it is a mutable copy, a copy in which I can insert, cancel, and replace pieces.''
+
+\subsection{The Full Menagerie of String Types}
+
+The professor warned that strings in Rust are ``even more elaborate'' than what he showed. Beyond \texttt{\&str} and \texttt{String}, Rust also has:
+
+\begin{center}
+\begin{tabular}{|l|p{9cm}|}
+\hline
+\textbf{Type} & \textbf{Purpose} \\
+\hline
+\texttt{\&[u8]} & A byte slice. Not quite a string, but very close. \\
+\texttt{\&[u8; N]} & A fixed-size byte array reference. \\
+\texttt{Vec<u8>} & An owned vector of bytes. \\
+\texttt{OsStr} / \texttt{OsString} & Strings as the operating system expects them. On Windows, for example, the OS wants 16-bit characters internally (UTF-16), so when calling Windows system calls you must convert to \texttt{OsStr}. \\
+\texttt{Path} / \texttt{PathBuf} & File system paths. Always appear to be strings but with special semantics---segmented by \texttt{/} (Unix) or \texttt{\textbackslash} (Windows). \\
+\texttt{CStr} / \texttt{CString} & Null-terminated C-style strings, needed when calling C libraries via FFI. \\
+\texttt{\&'static str} & String slices with a lifetime guaranteed for the entire duration of the program. \\
+\hline
+\end{tabular}
+\end{center}
+
+The professor also mentioned \texttt{\&u8}---a simple reference to a single byte---as yet another related type in the string/byte ecosystem.
+
+The professor's conclusion: ``What seems like a banality is not a banality. Behind it is a whole series of distinctions. We'll encounter these as we go deeper into lifetimes and FFI.''
+
+\begin{insightbox}
+The professor specifically explained the need for \texttt{Path}/\texttt{PathBuf}: ``It is always apparently a string, but a string with a particular semantic and segmentable by slash or backslash, or in other operating systems, by vertical bars or other things.'' And for \texttt{CStr}/\texttt{CString}: ``The strings coded in the way that C codes them, with the final zero. I need them when I have to call a C library.'' Understanding \emph{why} each type exists is more important than memorizing them all.
+\end{insightbox}
+
+\begin{examprioritybox}
+The distinction between \texttt{\&str} (immutable fat pointer: ptr + len, pointing to static or borrowed data) and \texttt{String} (owned heap data: ptr + len + capacity) is \textbf{almost guaranteed to appear on the exam}. You must be able to draw the memory layout of both and trace the lifecycle of a \texttt{String} through allocation, growth, and deallocation.
+
+\textbf{Common Pitfall:} Confusing byte length with character count. A string of 3 characters can be 3 to 12 bytes long depending on the characters.
+
+\textbf{Expected Mastery Level:} Very High.
+\end{examprioritybox}
+
+% ============================================================
+\section{Vectors: \texttt{Vec<T>}}
+% ============================================================
+
+The other ``fast object'' the professor introduced is \texttt{Vec<T>}---a generic, dynamically-sized sequence of elements.
+
+\subsection{Creating and Using Vectors}
+
+\texttt{Vec<T>} is a generic type: the \texttt{T} is a placeholder for any type. The professor illustrated this versatility: ``I can make number vectors, string vectors, vector vectors, list vectors, file vectors, etc. That \texttt{T} becomes the type of element that the vector contains.''
+
+A critical property of \texttt{Vec<T>} is \textbf{homogeneity}: the vector encloses within itself a sequence of \textbf{homogeneous elements of type \texttt{T}}. All elements must be of the same type.
+
+\begin{lstlisting}[language=Rust]
+let mut v: Vec<i32> = Vec::new(); // Empty vector of i32
+v.push(42);                        // Add to the end
+v.push(99);
+let last = v.pop();                // Remove from end: Some(99)
+\end{lstlisting}
+
+If the vector is mutable, it can grow and shrink. \texttt{push} adds to the end; \texttt{pop} removes from the end.
+
+\subsection{Indexing and Safe Access}
+
+You can access elements by index with square brackets:
+
+\begin{lstlisting}[language=Rust]
+let v = vec![10, 20, 30, 40];
+let third = v[2]; // 30 (zero-indexed)
+// let oob = v[10]; // PANIC! Index out of bounds
+\end{lstlisting}
+
+The professor explained indexing: ``\texttt{v[3]} means `I assume that vector has at least four elements, and I access the fourth element.' \texttt{v[0]} accesses the first element. If the element is not there, it generates a so-called panic condition.''
+
+If the index is out of bounds, this generates a \textbf{panic}---the program crashes immediately.
+
+To avoid panics, use the \texttt{get} method (for read-only access) or \texttt{get\_mut} (for mutable access). These return an \texttt{Option<T>}:
+
+\begin{lstlisting}[language=Rust]
+let v = vec![10, 20, 30];
+match v.get(5) {
+    Some(val) => println!("Found: {}", val),
+    None => println!("Index out of bounds!"),
+}
+\end{lstlisting}
+
+\begin{insightbox}
+The professor explained \texttt{Option}: ``\texttt{get} and \texttt{get\_mut} don't give you the element immediately. They wrap it in an \texttt{Option}. What is an \texttt{Option}? It's something that can contain either the value (\texttt{Some}) or nothing (\texttt{None}). And it's your job to check which one it is.'' This is Rust's replacement for \texttt{null}---instead of risking a null pointer, you are \emph{forced} to handle the case where the value might be absent.
+\end{insightbox}
+
+The distinction between \texttt{get} and \texttt{get\_mut} reflects whether you want to \textbf{read} or \textbf{write} the element at that position. The professor made this explicit: ``So I can distinguish what I want to do. I want to read or I want to write in that vector. \texttt{get} or \texttt{get\_mut}.''
+
+% ============================================================
+\section{Shadowing}
+% ============================================================
+
+Occasionally you may want to reuse a variable name while changing its type or making an immutable copy. Rust permits \textbf{shadowing}:
+
+\begin{lstlisting}[language=Rust]
+fn main() {
+    let x = 5;
+    let x = x + 1;   // Shadows the previous x
+
+    {
+        let x = x * 2;  // Shadows in inner scope
+        println!("Inner x: {}", x); // 12
+    }
+
+    println!("Outer x: {}", x); // 6
+}
+\end{lstlisting}
+
+\begin{memoryblock}
+Each \texttt{let x} allocates a \textbf{new} stack slot. The previous \texttt{x} is effectively hidden (shadowed) but still exists in memory until its scope ends. The inner scope creates yet another stack slot. When the inner block closes, the inner \texttt{x} is dropped, and the outer \texttt{x} (value 6) becomes visible again. No heap allocation or ownership transfer occurs here---these are primitive integers on the stack.
+\end{memoryblock}
+
+\begin{insightbox}
+Shadowing is \textbf{distinct from mutability}. When you shadow a variable, you are declaring a completely new variable that happens to share the same name. This allows you to change the type or enforce immutability after a transformation. It is commonly used in Rust to avoid inventing arbitrary names like \texttt{x\_str} or \texttt{x\_num}.
+\end{insightbox}
+
+% ============================================================
+\section{Reading from Console, Files, and Listing Directories}
+% ============================================================
+
+The professor briefly mentioned that the lecture slides contain concrete examples of:
+\begin{itemize}
+    \item Reading from the console (standard input)
+    \item Reading a file line by line
+    \item Writing to a file
+    \item Listing all files in a directory
+\end{itemize}
+
+These examples would be used in the laboratory exercises the following day. While the professor did not walk through them in detail during the lecture, he indicated that they provide the starting point for hands-on exercises: ``In the slides that follow, you have a series of concrete examples---how I read from the console, how I read a file line by line, how I write to a file, how I list all the files of a directory. Tomorrow you will use them. So here you have the examples from which to start to be able to do the exercises.''
+
+\begin{exambox}
+While the file I/O examples may not be heavily tested on their own, understanding how Rust handles \texttt{Result<T, E>} (for error handling during I/O) and how iterators work with file lines is foundational. These concepts build upon the \texttt{Option<T>} pattern introduced with vectors.
+\end{exambox}
+
+% ============================================================
+\section*{Summary: Key Comparisons}
+% ============================================================
+
+\begin{center}
+\begin{tabular}{|p{3.5cm}|p{5cm}|p{5cm}|}
+\hline
+\textbf{Concept} & \textbf{C / Java} & \textbf{Rust} \\
+\hline
+Integer sizes & C: \texttt{int} has platform-dependent size. Java: \texttt{int} is always 32-bit. & Explicit sizes: \texttt{i8}, \texttt{i16}, \texttt{i32}, \texttt{i64}, \texttt{u8}, etc. \\
+\hline
+Null values & C: \texttt{NULL} (a \texttt{(void*)0} macro). Java: \texttt{null} reference. & No \texttt{null}. Uses \texttt{Option<T>} (\texttt{Some}/\texttt{None}). \\
+\hline
+Immutability & C: \texttt{const} (advisory). Java: \texttt{final} (prevents reassignment only). & \texttt{let} = deep immutability. \texttt{let mut} = explicit opt-in to mutability. \\
+\hline
+Increment operators & C/Java: \texttt{++i}, \texttt{i++} (source of subtle bugs). & Removed. Use explicit \texttt{i += 1}. \\
+\hline
+String termination & C: null-terminated (\texttt{'\textbackslash 0'}). & Fat pointer: pointer + length. No null terminator. \\
+\hline
+String mutability & Java: \texttt{String} (immutable) vs. \texttt{StringBuilder} (mutable). & \texttt{\&str} (immutable slice) vs. \texttt{String} (owned, mutable). \\
+\hline
+String methods & C: manual functions (\texttt{strlen}, etc.). Java: separate method sets on \texttt{String} and \texttt{StringBuilder}. & \texttt{\&str} methods are inherited by \texttt{String}; \texttt{String} adds mutating methods. \\
+\hline
+Macros & C: preprocessor text substitution (\texttt{\#define}). & Syntax-tree-aware, hygienic, type-checked macros (\texttt{!}). \\
+\hline
+Switch / match & C/Java: \texttt{switch} on values only. & \texttt{match}: value + structural pattern matching with exhaustiveness. \\
+\hline
+Return values & C/Java: explicit \texttt{return} keyword required. & Last expression without semicolon is the return value; \texttt{return} is optional. \\
+\hline
+\end{tabular}
+\end{center}
+
+% ============================================================
+\section*{Exam Relevance and Recurrence}
+% ============================================================
+
+\textbf{Score:} Very High
+
+\textbf{Notes:} This chapter covers the foundations upon which \emph{every} subsequent Rust topic is built. Exam questions from this material typically fall into these categories:
+
+\begin{enumerate}
+    \item \textbf{Memory Layout questions:} Draw the stack/heap layout for a \texttt{\&str} and a \texttt{String}. Trace the lifecycle of a \texttt{String} through push operations and scope exit.
+    \item \textbf{Theoretical Concept questions:} Explain the Principle of Minimum Privilege. Compare Rust immutability with Java's \texttt{final}. Explain why Rust has no \texttt{null}. Describe the difference between Rust macros and C preprocessor macros.
+    \item \textbf{Code Prediction questions:} Given a snippet with \texttt{let} vs \texttt{let mut}, predict whether it compiles and what it prints. Given a \texttt{match} expression, determine the output.
+\end{enumerate}
+
+% ============================================================
+\section{Domande ed Esercizi da Esami Passati}
+% ============================================================
+
+\textit{Nessuna domanda d'esame passata mappata direttamente su questo capitolo.}

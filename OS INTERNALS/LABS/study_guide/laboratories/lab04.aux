@@ -1,0 +1,68 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\@writefile{toc}{\contentsline {chapter}{\numberline {4}LAB 04: Process Termination and WaitPID}{65}{chapter.4}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\@writefile{toc}{\contentsline {section}{\numberline {4.1}Introduction: The Interconnected Process Lifecycle}{65}{section.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}The Process Table and PID Assignment}{65}{section.4.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.1}{\ignorespaces The synchronization sequence between a parent calling \texttt  {waitpid} and a child calling \texttt  {exit}.}}{66}{figure.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}High-Level Structure: The Process Table}{67}{subsection.4.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}Circular Buffer for PID Assignment}{67}{subsection.4.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.3}The Exit System Call and the Zombie State}{67}{section.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.1}The Zombie State}{68}{subsection.4.3.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.2}{\ignorespaces Process lifecycle showing the transition into the Zombie state and subsequent reaping by the parent.}}{68}{figure.4.2}\protected@file@percent }
+\newlabel{fig:zombie_lifecycle}{{4.2}{68}{Process lifecycle showing the transition into the Zombie state and subsequent reaping by the parent}{figure.4.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}The Thread Termination Rule and the Race Condition}{69}{subsection.4.3.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.3}{\ignorespaces Sequence diagram illustrating the race condition in sys\_exit if the parent is signaled before thread detachment.}}{69}{figure.4.3}\protected@file@percent }
+\newlabel{fig:race_condition}{{4.3}{69}{Sequence diagram illustrating the race condition in sys\_exit if the parent is signaled before thread detachment}{figure.4.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.4}The Wait System Call: \texttt  {sys\_waitpid} vs \texttt  {proc\_wait}}{70}{section.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.1}User Layer: \texttt  {sys\_waitpid}}{70}{subsection.4.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.2}Kernel Layer: \texttt  {proc\_wait}}{70}{subsection.4.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.5}Applying Wait Logic to the Kernel Menu}{71}{section.4.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.6}Laboratory 04: Step-by-Step Guide}{72}{section.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.1}The Goal and the Current Problem}{72}{subsection.4.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.2}Step 1: Upgrading the Process Structure}{72}{subsection.4.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.3}Step 2: Defining the Process Table}{72}{subsection.4.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.4}Step 3: Circular PID Assignment}{73}{subsection.4.6.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.5}Step 4: Implementing \texttt  {sys\_exit}}{73}{subsection.4.6.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.6}Step 5: Implementing \texttt  {proc\_wait}}{74}{subsection.4.6.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.7}Step 6: Table Lookup and Cleanup Functions}{74}{subsection.4.6.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.8}Step 7: Enabling the WAITPID Option}{75}{subsection.4.6.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.9}Step 8: Testing the Execution}{75}{subsection.4.6.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.7}Global Architecture: The Process Termination Call Graph}{76}{section.4.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.4}{\ignorespaces The architectural call graph for Process Termination and WaitPID in OS161.}}{76}{figure.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.8}The Open File Table (Preview)}{78}{section.4.8}\protected@file@percent }
+\@setckpt{laboratories/lab04}{
+\setcounter{page}{84}
+\setcounter{equation}{0}
+\setcounter{enumi}{3}
+\setcounter{enumii}{0}
+\setcounter{enumiii}{0}
+\setcounter{enumiv}{0}
+\setcounter{footnote}{0}
+\setcounter{mpfootnote}{0}
+\setcounter{part}{0}
+\setcounter{chapter}{4}
+\setcounter{section}{8}
+\setcounter{subsection}{0}
+\setcounter{subsubsection}{0}
+\setcounter{paragraph}{0}
+\setcounter{subparagraph}{0}
+\setcounter{figure}{4}
+\setcounter{table}{0}
+\setcounter{parentequation}{0}
+\setcounter{section@level}{1}
+\setcounter{Item}{47}
+\setcounter{Hfootnote}{0}
+\setcounter{bookmark@seq@number}{107}
+\setcounter{lstnumber}{6}
+\setcounter{tcbbreakpart}{1}
+\setcounter{tcblayer}{0}
+\setcounter{tcolorbox@number}{18}
+\setcounter{tcbrastercolumn}{1}
+\setcounter{tcbrasterrow}{1}
+\setcounter{tcbrasternum}{1}
+\setcounter{tcbraster}{0}
+\setcounter{tcblisting}{0}
+\setcounter{lstlisting}{0}
+}

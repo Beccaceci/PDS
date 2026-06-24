@@ -1,0 +1,77 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}Compound Types: Structs, Enums, and Pattern Matching}{101}{chapter.5}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.1}{\ignorespaces Structs combine fields with AND semantics (product types), while Enums offer OR semantics (sum types). Pattern matching is the safe key to open both.}}{102}{figure.5.1}\protected@file@percent }
+\newlabel{fig:ch05_overview}{{5.1}{102}{Structs combine fields with AND semantics (product types), while Enums offer OR semantics (sum types). Pattern matching is the safe key to open both}{figure.5.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.1}Structs: Aggregating Heterogeneous Data}{102}{section.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.1}Instantiating Structs}{103}{subsection.5.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Field Init Shorthand.}{103}{section*.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Struct Update Syntax (Spread).}{103}{section*.17}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Accessing and Modifying Fields.}{104}{section*.18}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.2}Nominal vs. Structural Typing}{104}{subsection.5.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.3}Tuple Structs}{105}{subsection.5.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.4}Unit-Like Structs (Zero-Sized Types)}{105}{subsection.5.1.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.2}Memory Layout of Structs}{106}{section.5.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5.2}{\ignorespaces Memory layout of the \texttt  {Player} struct. The 24-byte \texttt  {String} header (pointer, capacity, length) is followed by a 4-byte \texttt  {i32} and a 1-byte \texttt  {u8}, with padding bytes added by the compiler for alignment.}}{107}{figure.5.2}\protected@file@percent }
+\newlabel{fig:player_memory}{{5.2}{107}{Memory layout of the \texttt {Player} struct. The 24-byte \texttt {String} header (pointer, capacity, length) is followed by a 4-byte \texttt {i32} and a 1-byte \texttt {u8}, with padding bytes added by the compiler for alignment}{figure.5.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{No Guaranteed Field Order.}{107}{section*.19}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Forcing the Layout with \texttt  {\#[repr(C)]}.}{107}{section*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Inspecting Memory at Runtime.}{108}{section*.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.3}Visibility, Encapsulation, and the \texttt  {pub} Keyword}{108}{section.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Default Visibility.}{108}{section*.22}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Making Fields Public.}{108}{section*.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.4}Methods: Adding Behavior with \texttt  {impl} Blocks}{109}{section.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.1}The Separation of Data and Behavior}{109}{subsection.5.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.2}The Three Method Receivers}{110}{subsection.5.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.3}A Complete Example: \texttt  {mirror}, \texttt  {length}, and \texttt  {scale}}{111}{subsection.5.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.4}Method Calls Are Syntactic Sugar}{112}{subsection.5.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.5}Constructors: The \texttt  {new} Convention}{112}{subsection.5.4.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Multiple Constructors.}{113}{section*.24}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.6}Associated Functions (Static Methods)}{113}{subsection.5.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.5}Why Rust Rejects Inheritance}{113}{section.5.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.6}The \texttt  {Drop} Trait: Destructors and RAII}{114}{section.5.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.6.1}How \texttt  {Drop} Works}{114}{subsection.5.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.6.2}The RAII Pattern}{115}{subsection.5.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.6.3}Implementing Drop}{115}{subsection.5.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.7}Structs Are Product Types}{116}{section.5.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.8}Enums: Expressing Alternatives (Sum Types)}{116}{section.5.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.8.1}Simple Enums: Labels with Optional Values}{116}{subsection.5.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.8.2}Enums with Data Payloads}{116}{subsection.5.8.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.8.3}Memory Layout of Enums: Tagged Unions}{117}{subsection.5.8.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5.3}{\ignorespaces Memory layout of \texttt  {enum Shape}. All variants occupy the same total space. The tag byte identifies which variant is active, and the remaining space holds the payload (or padding if the variant's data is smaller than the largest variant).}}{119}{figure.5.3}\protected@file@percent }
+\newlabel{fig:enum_memory_layout}{{5.3}{119}{Memory layout of \texttt {enum Shape}. All variants occupy the same total space. The tag byte identifies which variant is active, and the remaining space holds the payload (or padding if the variant's data is smaller than the largest variant)}{figure.5.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.9}Pattern Matching with \texttt  {match}}{119}{section.5.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.9.1}The \texttt  {if let} Construct}{120}{subsection.5.9.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.9.2}Destructuring Structs}{120}{subsection.5.9.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.10}Summary: Product Types vs. Sum Types}{120}{section.5.10}\protected@file@percent }
+\@setckpt{chapters/chapter_05_Tipi_composti/chapter_05}{
+\setcounter{page}{124}
+\setcounter{equation}{0}
+\setcounter{enumi}{3}
+\setcounter{enumii}{0}
+\setcounter{enumiii}{0}
+\setcounter{enumiv}{0}
+\setcounter{footnote}{0}
+\setcounter{mpfootnote}{0}
+\setcounter{part}{0}
+\setcounter{chapter}{5}
+\setcounter{section}{10}
+\setcounter{subsection}{0}
+\setcounter{subsubsection}{0}
+\setcounter{paragraph}{0}
+\setcounter{subparagraph}{0}
+\setcounter{figure}{3}
+\setcounter{table}{0}
+\setcounter{lstnumber}{10}
+\setcounter{tcbbreakpart}{1}
+\setcounter{tcblayer}{0}
+\setcounter{tcolorbox@number}{117}
+\setcounter{section@level}{1}
+\setcounter{Item}{91}
+\setcounter{Hfootnote}{0}
+\setcounter{bookmark@seq@number}{191}
+\setcounter{float@type}{16}
+\setcounter{lstlisting}{0}
+}

@@ -1,0 +1,89 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\@writefile{toc}{\contentsline {chapter}{\numberline {4}Ownership and Borrowing}{69}{chapter.4}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\@writefile{toc}{\contentsline {section}{\numberline {4.1}The Core Concept of Ownership}{70}{section.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.1}What Does ``Possessing a Value'' Mean?}{70}{subsection.4.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.2}When Does Release Happen?}{71}{subsection.4.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}Ownership in Action: The Vec Example}{71}{section.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}Vec::new() vs.\ Vec::with\_capacity()}{72}{subsection.4.2.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.1}{\ignorespaces Memory layout of a \texttt  {Vec}: stack metadata (pointer, capacity, length) and heap buffer, including the reallocation process when capacity is exceeded.}}{74}{figure.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.3}Transferring Ownership: Moves}{74}{section.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.1}The Three Forms of Assignment}{74}{subsection.4.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}Detailed String Move Example}{75}{subsection.4.3.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.2}{\ignorespaces Ownership transfer of a \texttt  {String}: the bitwise copy of stack data, invalidation of the source, and how drop is executed only by the new owner.}}{76}{figure.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.3}Reassignment After Move}{77}{subsection.4.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.4}Shadowing vs.\ Reassignment}{77}{subsection.4.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.5}Implicit Moves: The Operator Trap}{78}{subsection.4.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.4}The Trait System: Drop, Copy, and Clone}{79}{section.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.1}The Drop Trait}{79}{subsection.4.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.2}The Copy Trait}{79}{subsection.4.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.3}The Mutual Exclusivity of Drop and Copy}{79}{subsection.4.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.4}Who Decides the Trait Labels?}{80}{subsection.4.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.5}Copy Propagation in Composite Types}{80}{subsection.4.4.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.6}What ``Move'' and ``Copy'' Actually Do at the Machine Level}{80}{subsection.4.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.7}The Clone Trait: Explicit Deep Copy}{80}{subsection.4.4.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.8}The Relationship Between Clone and Copy}{81}{subsection.4.4.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.5}Heap Allocation with Box}{82}{section.4.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.1}Box with Tuples: Detailed Walkthrough}{82}{subsection.4.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.2}Returning a Box from a Function: Ownership Transfer}{83}{subsection.4.5.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.3}{\ignorespaces Returning a \texttt  {Box} from a function: the heap allocation survives the function's stack frame because ownership transfers to the caller.}}{84}{figure.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.3}Box as a Specialized Pointer}{84}{subsection.4.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.6}Borrowing: Access Without Possession}{84}{section.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.1}Immutable References (\texttt  {\&T})}{85}{subsection.4.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Owner Freeze During Immutable Borrows}{85}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.2}Mutable References (\texttt  {\&mut T})}{85}{subsection.4.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Owner Blocked During Mutable Borrows}{86}{section*.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.3}The Cardinal Rule of Borrowing}{86}{subsection.4.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.7}The Borrow Checker and Lifetimes}{87}{section.4.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.1}The Compiler Proves Theorems}{87}{subsection.4.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.2}Lifetimes: The Concept}{87}{subsection.4.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.3}What Lifetimes Really Are Internally}{87}{subsection.4.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.4}The Core Lifetime Rule}{87}{subsection.4.7.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.5}Dangling Reference Example}{88}{subsection.4.7.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Dangling Pointers in C: A Detailed Walkthrough}{88}{section*.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.6}Lifetime Propagation into Containers}{88}{subsection.4.7.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.7}Lifetime Annotations}{89}{subsection.4.7.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Lifetime Annotations as Purely Symbolic Names}{89}{section*.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.8}Lifetimes in Structs}{90}{subsection.4.7.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.9}The \texttt  {'static} Lifetime}{90}{subsection.4.7.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.10}All Checks Are Compile-Time}{91}{subsection.4.7.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.8}Slices: References to Sequences}{91}{section.4.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.8.1}Fat Pointers}{91}{subsection.4.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.8.2}Creating Slices}{91}{subsection.4.8.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.4}{\ignorespaces A slice as a fat pointer: the pointer addresses the first included element, and the length field enables runtime bounds checking.}}{92}{figure.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.9}Summary: Box vs.\ Reference --- A Comparison}{93}{section.4.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.10}Why Ownership Matters: Performance Without GC}{93}{section.4.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.11}Ownership Recap: The Professor's Summary}{94}{section.4.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.12}Comprehensive Ownership Tracing: Exam-Style Example}{96}{section.4.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.13}Domande ed Esercizi da Esami Passati}{97}{section.4.13}\protected@file@percent }
+\@setckpt{chapters/chapter_04_Possesso/chapter_04}{
+\setcounter{page}{100}
+\setcounter{equation}{0}
+\setcounter{enumi}{4}
+\setcounter{enumii}{0}
+\setcounter{enumiii}{0}
+\setcounter{enumiv}{0}
+\setcounter{footnote}{0}
+\setcounter{mpfootnote}{0}
+\setcounter{part}{0}
+\setcounter{chapter}{4}
+\setcounter{section}{13}
+\setcounter{subsection}{0}
+\setcounter{subsubsection}{0}
+\setcounter{paragraph}{0}
+\setcounter{subparagraph}{0}
+\setcounter{figure}{4}
+\setcounter{table}{0}
+\setcounter{lstnumber}{4}
+\setcounter{tcbbreakpart}{1}
+\setcounter{tcblayer}{0}
+\setcounter{tcolorbox@number}{97}
+\setcounter{section@level}{1}
+\setcounter{Item}{74}
+\setcounter{Hfootnote}{0}
+\setcounter{bookmark@seq@number}{162}
+\setcounter{float@type}{16}
+\setcounter{lstlisting}{0}
+}

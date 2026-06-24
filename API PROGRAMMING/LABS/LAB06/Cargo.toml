@@ -1,0 +1,15 @@
+[package]
+name = "lab06"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+crossbeam-channel = "0.5"
+
+[[bin]]
+name = "my_implementation"
+path = "src/my_implementation/main.rs"
+
+[[bin]]
+name = "solution"
+path = "src/solution/main.rs"

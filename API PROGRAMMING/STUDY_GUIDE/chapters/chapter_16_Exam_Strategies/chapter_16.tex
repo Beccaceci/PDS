@@ -1,0 +1,159 @@
+\chapter{Exam Strategies and Past Exercises}
+
+\section{Mastering the Final Exam}
+
+Based on an analysis of past exams, the professor consistently evaluates your understanding of Rust systems programming across three main dimensions: 
+\begin{enumerate}
+    \item \textbf{Theoretical Concepts}: Your deep understanding of Rust's ownership model, memory management, and concurrency traits.
+    \item \textbf{Memory Layout Analysis}: Your ability to map Rust's high-level abstractions to their exact byte-level representations on the Stack and the Heap.
+    \item \textbf{Concurrency Implementations}: Your capability to architect and implement thread-safe, concurrent data structures using synchronization primitives.
+\end{enumerate}
+
+This chapter breaks down each type of exercise and provides a repeatable, step-by-step strategy for solving them, complete with examples from past exams.
+
+\section{Type 1: Memory Layout \& Sizing Analysis}
+
+These exercises test your understanding of how Rust stores data under the hood. You will typically be asked to define the memory footprint of specific structs or smart pointers, and specify whether their components reside on the Stack or the Heap.
+
+\begin{exambox}
+\textbf{Past Exam Question Example}\\
+Explain the differences between stack and heap. Furthermore, indicate in detail where the data composing the following Rust constructs is located: \texttt{Box<[T]>}, \texttt{RefCell<T>}, and \texttt{\&[T]}.
+\end{exambox}
+
+\subsection*{Step-by-Step Solution Strategy}
+
+\textbf{Step 1: Define Stack vs. Heap}\\
+Start with a concise definition. The \textbf{Stack} is used for fixed-size data known at compile time, featuring fast allocation/deallocation via the stack pointer. The \textbf{Heap} is used for dynamic data whose size might change at runtime, requiring slower allocation mechanisms and pointer indirection.
+
+\textbf{Step 2: Deconstruct the Types}\\
+For each requested type, mentally deconstruct it into its stack-allocated pointer/metadata and its heap-allocated payload.
+
+\textbf{Step 3: Detail the Locations}
+\begin{itemize}
+    \item \textbf{\texttt{Box<[T]>} (Owned Slice on the Heap):}
+    \begin{itemize}
+        \item \textit{Stack:} A "fat pointer" containing the memory address pointing to the heap allocation (8 bytes on 64-bit), and a \texttt{usize} representing the length of the slice (8 bytes). Total Stack: 16 bytes.
+        \item \textit{Heap:} A contiguous array of elements of type \texttt{T}, occupying \texttt{size\_of::<T>() * length} bytes.
+    \end{itemize}
+    
+    \item \textbf{\texttt{RefCell<T>} (Interior Mutability):}
+    \begin{itemize}
+        \item \textit{Stack:} Assuming the \texttt{RefCell} itself is declared as a local variable, it resides entirely on the stack. It contains a borrow counter (usually an \texttt{isize} tracking active mutable/immutable borrows) and the actual payload data \texttt{T}.
+        \item \textit{Heap:} None, unless \texttt{T} itself allocates on the heap.
+    \end{itemize}
+    
+    \item \textbf{\texttt{\&[T]} (Borrowed Slice):}
+    \begin{itemize}
+        \item \textit{Stack:} A "fat pointer" containing the memory address of the first element (8 bytes) and the length of the slice (8 bytes). Total Stack: 16 bytes.
+        \item \textit{Heap/Stack:} The actual data elements reside wherever the borrowed array was originally allocated (could be stack, heap, or static memory).
+    \end{itemize}
+\end{itemize}
+
+\begin{insightbox}
+\textbf{Exam Tip}\\
+Always explicitly state that "fat pointers" (like slices and trait objects) take up exactly two machine words (16 bytes on a 64-bit system). Do not just say "it's a pointer." Mention the length/capacity metadata!
+\end{insightbox}
+
+\section{Type 2: Theoretical Concurrency Concepts}
+
+These questions test your understanding of Rust's "Fearless Concurrency" guarantees and how the compiler prevents data races.
+
+\begin{exambox}
+\textbf{Past Exam Question Example}\\
+Identify the fundamental traits of concurrency in Rust. Subsequently, with reference to the mutability/immutability of resources, outline how this affects the management of thread-level synchronization.
+\end{exambox}
+
+\subsection*{Step-by-Step Solution Strategy}
+
+\textbf{Step 1: Identify the Fundamental Traits}\\
+Immediately name the two core marker traits: \texttt{Send} and \texttt{Sync}.
+\begin{itemize}
+    \item \textbf{\texttt{Send}:} Indicates that ownership of a value of this type can be safely transferred to another thread.
+    \item \textbf{\texttt{Sync}:} Indicates that it is safe for multiple threads to hold immutable references (\texttt{\&T}) to a value of this type concurrently. (Formally, \texttt{T} is \texttt{Sync} if and only if \texttt{\&T} is \texttt{Send}).
+\end{itemize}
+
+\textbf{Step 2: Connect Mutability to Synchronization}\\
+Explain how Rust's borrowing rules scale to multi-threading:
+\begin{itemize}
+    \item \textit{Immutability:} If multiple threads only need to read a resource, no explicit synchronization (like Mutexes) is needed. You can wrap the resource in an \texttt{Arc} (Atomic Reference Count) to share ownership, and the compiler guarantees safety because immutable references (\texttt{\&T}) cannot cause data races.
+    \item \textit{Mutability:} If even one thread needs to modify the resource, Rust's rule of "aliasing XOR mutability" kicks in. You cannot have multiple threads holding mutable references. To mutate shared state safely, you must use synchronization primitives like a \texttt{Mutex} or \texttt{RwLock}. These primitives enforce mutually exclusive access at runtime, essentially turning a shared immutable reference (\texttt{\&Mutex<T>}) into an exclusive mutable reference (\texttt{\&mut T}) for the duration of the lock guard.
+\end{itemize}
+
+\section{Type 3: Low-Level Concurrency Implementation}
+
+This is typically the most challenging part of the exam. You will be asked to architect a thread-safe data structure from scratch.
+
+\begin{exambox}
+\textbf{Past Exam Question Example}\\
+Implement a \texttt{ConcurrentCache} trait. The cache must be thread-safe, allow storing key-value pairs, and automatically expire entries after a specified duration. The cache must employ a background thread to periodically clean up expired entries.
+\end{exambox}
+
+\subsection*{Step-by-Step Solution Strategy}
+
+\textbf{Step 1: Problem Analysis \& Struct Design}\\
+Identify the shared state. A cache needs a \texttt{HashMap}. Because it must be thread-safe and handle expiration, the map must store values alongside their expiration timestamps.
+Since it will be accessed concurrently by multiple threads, the \texttt{HashMap} must be wrapped in a \texttt{Mutex} (or \texttt{RwLock}), and shared via an \texttt{Arc}.
+
+\begin{lstlisting}[language=Rust]
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use std::time::Instant;
+
+struct CacheEntry {
+    value: Arc<String>,
+    expires_at: Instant,
+}
+
+pub struct ConcurrentCacheImpl {
+    map: Arc<Mutex<HashMap<String, CacheEntry>>>,
+    // Need a way to signal the background thread to stop when dropped
+}
+\end{lstlisting}
+
+\textbf{Step 2: Implement the Core Logic}\\
+Implement the \texttt{get} and \texttt{set} methods. Remember to handle lock acquisitions cleanly and check for expiration during \texttt{get} operations.
+
+\begin{lstlisting}[language=Rust]
+impl ConcurrentCacheImpl {
+    pub fn set(&self, key: &str, value: &str, duration: std::time::Duration) {
+        let mut map = self.map.lock().unwrap();
+        map.insert(
+            key.to_string(),
+            CacheEntry {
+                value: Arc::new(value.to_string()),
+                expires_at: Instant::now() + duration,
+            },
+        );
+    }
+
+    pub fn get(&self, key: &str) -> Option<Arc<String>> {
+        let mut map = self.map.lock().unwrap();
+        if let Some(entry) = map.get(key) {
+            if Instant::now() < entry.expires_at {
+                return Some(Arc::clone(&entry.value));
+            } else {
+                // Lazy cleanup: remove if expired
+                map.remove(key);
+            }
+        }
+        None
+    }
+}
+\end{lstlisting}
+
+\textbf{Step 3: Background Worker \& Cleanup}\\
+The question demands a background thread for active cleanup. When spawning background threads that share state, you must ensure the thread terminates properly when the main structure is dropped, preventing memory leaks.
+
+\begin{lstlisting}[language=Rust]
+impl Drop for ConcurrentCacheImpl {
+    fn drop(&mut self) {
+        // Signal the background thread to terminate using a boolean flag
+        // or a channel, and wait for it to join.
+    }
+}
+\end{lstlisting}
+
+\begin{warningbox}
+\textbf{The Drop Trait Trap}\\
+When an exam asks you to spawn a background thread inside a constructor (\texttt{new}), the professor is explicitly testing whether you remember to implement the \texttt{Drop} trait. If you spawn a thread and never terminate/join it in \texttt{Drop}, you have created a resource leak, which will result in heavily penalized points!
+\end{warningbox}

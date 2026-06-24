@@ -1,0 +1,81 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\@writefile{toc}{\contentsline {chapter}{\numberline {10}Collections and Persistence}{171}{chapter.10}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\@writefile{toc}{\contentsline {section}{\numberline {10.1}Introduction to Dynamic Containers}{171}{section.10.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.1}Shared Collection API and Complexity}{171}{subsection.10.1.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {10.1}{\ignorespaces Equivalent Collections Across Programming Languages}}{172}{table.10.1}\protected@file@percent }
+\newlabel{tab:collections_comparison}{{10.1}{172}{Equivalent Collections Across Programming Languages}{table.10.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {10.2}Sequences: Vectors (\texttt  {Vec<T>})}{172}{section.10.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2.1}The Problem of Contiguous Dynamic Data}{172}{subsection.10.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2.2}Mechanism and Memory Layout}{172}{subsection.10.2.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {10.1}{\ignorespaces The three core components of a \texttt  {Vec<T>}: pointer, capacity, and length.}}{173}{figure.10.1}\protected@file@percent }
+\newlabel{fig:vec_components}{{10.1}{173}{The three core components of a \texttt {Vec<T>}: pointer, capacity, and length}{figure.10.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2.3}Concrete Example: Building a Vector}{173}{subsection.10.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Memory Model Analysis:}{174}{section*.44}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2.4}Trade-offs}{174}{subsection.10.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2.5}Heterogeneous Sequences via Enums}{174}{subsection.10.2.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {10.3}Sequences: Double-Ended Queues (\texttt  {VecDeque<T>})}{175}{section.10.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.3.1}Mechanism and Memory Layout}{175}{subsection.10.3.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {10.2}{\ignorespaces The ring buffer memory layout of a \texttt  {VecDeque}. Elements can wrap around the end of the allocated heap space back to the beginning.}}{175}{figure.10.2}\protected@file@percent }
+\newlabel{fig:vecdeque_memory}{{10.2}{175}{The ring buffer memory layout of a \texttt {VecDeque}. Elements can wrap around the end of the allocated heap space back to the beginning}{figure.10.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {10.4}Sequences: Linked Lists (\texttt  {LinkedList<T>})}{176}{section.10.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.1}Mechanism and Memory Layout}{176}{subsection.10.4.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {10.3}{\ignorespaces The doubly linked list memory layout. Nodes are scattered across the heap, connected by \texttt  {prev} and \texttt  {next} pointers.}}{176}{figure.10.3}\protected@file@percent }
+\newlabel{fig:linkedlist_memory}{{10.3}{176}{The doubly linked list memory layout. Nodes are scattered across the heap, connected by \texttt {prev} and \texttt {next} pointers}{figure.10.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.2}Trade-offs}{176}{subsection.10.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {10.5}Text Collections: \texttt  {String} vs \texttt  {\&str}}{177}{section.10.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.5.1}Building Intuition}{177}{subsection.10.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.5.2}Concrete Example: Conversions}{177}{subsection.10.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Memory Model Analysis:}{177}{section*.45}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {10.6}Maps, Sets, and Priority Queues}{178}{section.10.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.6.1}The Problem of Fast Lookup}{178}{subsection.10.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.6.2}Mechanism: Hashing and Buckets}{178}{subsection.10.6.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {10.4}{\ignorespaces Memory Layout and Hashing Mechanism in a HashMap}}{178}{figure.10.4}\protected@file@percent }
+\newlabel{fig:hashmap_layout}{{10.4}{178}{Memory Layout and Hashing Mechanism in a HashMap}{figure.10.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.6.3}Map Initialization and Filtering}{179}{subsection.10.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.6.4}Concrete Example: The Entry API}{179}{subsection.10.6.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Memory Model Analysis:}{180}{section*.46}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.6.5}Sets: \texttt  {HashSet} and \texttt  {BTreeSet}}{180}{subsection.10.6.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.6.6}Priority Queues: \texttt  {BinaryHeap}}{180}{subsection.10.6.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {10.7}Persistence: \texttt  {Path}, \texttt  {PathBuf}, and \texttt  {File}}{180}{section.10.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.7.1}Paths: \texttt  {PathBuf} vs \texttt  {Path}}{180}{subsection.10.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.7.2}File System Utility Functions}{181}{subsection.10.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.7.3}File System Operations and I/O Traits}{181}{subsection.10.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Memory Model Analysis:}{182}{section*.47}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.7.4}Error Handling in I/O}{183}{subsection.10.7.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.7.5}Structured Data Serialization with Serde}{183}{subsection.10.7.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {10.8}Closures and Functional Traits}{183}{section.10.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.8.1}Function Pointers (\texttt  {fn})}{183}{subsection.10.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.8.2}Closures and State Capture}{184}{subsection.10.8.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {10.9}Domande ed Esercizi da Esami Passati}{184}{section.10.9}\protected@file@percent }
+\@setckpt{chapters/chapter_10_Collezioni_e_persistenza/chapter_10}{
+\setcounter{page}{185}
+\setcounter{equation}{0}
+\setcounter{enumi}{2}
+\setcounter{enumii}{0}
+\setcounter{enumiii}{0}
+\setcounter{enumiv}{0}
+\setcounter{footnote}{0}
+\setcounter{mpfootnote}{0}
+\setcounter{part}{0}
+\setcounter{chapter}{10}
+\setcounter{section}{9}
+\setcounter{subsection}{0}
+\setcounter{subsubsection}{0}
+\setcounter{paragraph}{0}
+\setcounter{subparagraph}{0}
+\setcounter{figure}{4}
+\setcounter{table}{1}
+\setcounter{lstnumber}{7}
+\setcounter{tcbbreakpart}{1}
+\setcounter{tcblayer}{0}
+\setcounter{tcolorbox@number}{171}
+\setcounter{section@level}{1}
+\setcounter{Item}{101}
+\setcounter{Hfootnote}{0}
+\setcounter{bookmark@seq@number}{269}
+\setcounter{float@type}{16}
+\setcounter{lstlisting}{0}
+}

@@ -1,0 +1,803 @@
+\chapter{Compound Types: Structs, Enums, and Pattern Matching}
+
+When modeling real-world domains, primitive types like integers and booleans are rarely sufficient on their own. To represent complex entities---such as a player in a game, a geometric shape, or an HTTP response---we must aggregate simpler data into cohesive, logical units. In Rust, we achieve this using two fundamental building blocks: \textbf{Structs} and \textbf{Enums}.
+
+Structs allow us to group heterogeneous fields together into a single composite value---a ``product'' of its parts. Enums allow us to express that a value can be exactly one of several possible variants---a ``sum'' of alternatives. Together with \textbf{pattern matching}, they form the core of data modeling in Rust and represent one of the language's most powerful features, far exceeding what is available in C or Java.
+
+This chapter traces the professor's lecture precisely, from the declaration and instantiation of structs, through memory layout analysis and encapsulation, to Rust's powerful enums with data payloads and the \texttt{match} construct that safely extracts their contents.
+
+% AI-IMAGE-REQUEST: A high-level conceptual diagram showing Structs as "AND" containers (all fields together) and Enums as "OR" containers (one variant at a time), with arrows to Pattern Matching as the mechanism that safely opens them.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.75\textwidth]{images/ch05_structs_enums_overview.png}
+    \caption{Structs combine fields with AND semantics (product types), while Enums offer OR semantics (sum types). Pattern matching is the safe key to open both.}
+    \label{fig:ch05_overview}
+\end{figure}
+
+% ============================================================
+\section{Structs: Aggregating Heterogeneous Data}
+% ============================================================
+
+A \texttt{struct} (short for \textit{structure}, also called a \textit{record} in other languages) is a way of putting a set of potentially heterogeneous fields---a string, a number, a list, something else---together as a single, cohesive piece of information. As the professor put it: ``Record is basically a way of putting a set of fields, potentially heterogeneous, together as a distinctive collective information.''
+
+Consider implementing a game. You might need to represent a player through their nickname, their remaining health points, and perhaps their current level of ability. You could build a struct of this kind:
+
+\begin{lstlisting}[language=Rust]
+struct Player {
+    name: String,
+    health: i32,
+    level: u8,
+}
+\end{lstlisting}
+
+The syntax is straightforward: you use the keyword \texttt{struct}, give it a name (\texttt{Player}), and then list the fields it must contain inside curly braces, each with a name and a type.
+
+\begin{insightbox}[The Compiler Registers a New Type]
+When the compiler encounters a \texttt{struct} declaration, something very important happens: it registers a \textbf{new type} alongside all those it already knows. We are introducing a \textbf{user-defined type} because we have chosen to call it \texttt{Player}. The compiler immediately calculates its minimum size: 24 bytes for a \texttt{String}, 4 bytes for an \texttt{i32}, plus 1 byte for a \texttt{u8}---a total of 29 bytes at minimum. But 29 is an ``ugly'' number (not a multiple of 4 or 8), so the compiler will likely round it up to 32 bytes for alignment efficiency. We will explore exactly why later in this chapter.
+\end{insightbox}
+
+% ============================================================
+\subsection{Instantiating Structs}
+% ============================================================
+
+Once a struct is declared, we populate it by providing a value for each of its fields. The basic syntax uses the pattern \texttt{field\_name: value}:
+
+\begin{lstlisting}[language=Rust]
+let s = Player {
+    name: "Mario".to_string(),
+    health: 25,
+    level: 1,
+};
+\end{lstlisting}
+
+Here we have filled every field with a concrete value. Within \texttt{s}, we now have a complete \texttt{Player} structure. We can access its fields using dot notation: \texttt{s.name}, \texttt{s.health}, \texttt{s.level}.
+
+\paragraph{Field Init Shorthand.} If you already have variables of the right type whose names coincide with the field names, you can use a shorthand notation:
+
+\begin{lstlisting}[language=Rust]
+let name = String::from("Mario");
+let health = 25;
+let level = 1u8;
+
+// Shorthand: no need to write name: name, health: health, etc.
+let p = Player { name, health, level };
+\end{lstlisting}
+
+This shorthand allows us to avoid writing \texttt{name: name, health: health, level: level}---a convenient syntactic sugar that reduces redundancy.
+
+\paragraph{Struct Update Syntax (Spread).} If you want to create a new struct instance that is mostly the same as an existing one, but with a few fields changed, you can use the \textbf{struct update syntax}:
+
+\begin{lstlisting}[language=Rust]
+let s1 = Player {
+    name: "Paolo".to_string(),
+    ..s  // take the remaining fields (health, level) from s
+};
+\end{lstlisting}
+
+The operator \texttt{..s} means: ``for all the fields I have not mentioned here, go and take them from inside \texttt{s}.'' In this case, \texttt{health} and \texttt{level} are taken from \texttt{s}, while \texttt{name} is overridden with ``Paolo''.
+
+\begin{insightbox}[Struct Update vs. TypeScript Spread]
+The professor drew an important comparison with TypeScript. In TypeScript, there is a similar spread operator (\texttt{...}), but there is a critical difference in position. In TypeScript, the spread goes \textbf{before} the modifications: you first spread the original object, then override specific fields. In Rust, the operator \texttt{..}, if present, can \textbf{only be at the bottom}. Fields written in advance have precedence, and whatever is missing is then taken from the spread source. This ordering difference is important to remember!
+\end{insightbox}
+
+\begin{warningbox}[Ownership and Struct Updates]
+When using the struct update syntax (\texttt{..s}), Rust \textbf{moves} the fields from the original struct if they do not implement the \texttt{Copy} trait. For instance, \texttt{String} does not implement \texttt{Copy}. If we had written:
+\begin{lstlisting}[language=Rust]
+let s1 = Player { ..s };  // complete copy via spread
+\end{lstlisting}
+then the \texttt{name} field (a \texttt{String}) would be \textbf{moved} from \texttt{s} into \texttt{s1}. After this, \texttt{s.name} is no longer accessible---ownership has transferred. The \texttt{i32} and \texttt{u8} fields are fine because they implement \texttt{Copy} (they are simply bit-copied). If we need to keep \texttt{s} usable, we would need to \texttt{clone()} the \texttt{name} field explicitly. The professor emphasized: ``The rule of the ownership is always valid. I'm disassembling \texttt{s} to populate \texttt{s1}, but I'm taking away the name, which at this point would remain property of \texttt{s1} and no longer accessible on the other side.''
+\end{warningbox}
+
+To summarize, there are three main ways to populate a struct:
+\begin{enumerate}
+    \item \textbf{Explicit field assignment}: \texttt{field: value} for each field.
+    \item \textbf{Field init shorthand}: when a variable with the same name and type as the field already exists.
+    \item \textbf{Struct update syntax}: provide some fields explicitly and spread the remaining ones from an existing instance with \texttt{..existing\_instance}.
+\end{enumerate}
+
+\paragraph{Accessing and Modifying Fields.} Fields are accessed using dot notation. If the struct variable is declared as \texttt{mut}, we can modify individual fields:
+
+\begin{lstlisting}[language=Rust]
+let mut s = Player {
+    name: "Mario".to_string(),
+    health: 25,
+    level: 1,
+};
+
+s.level = 2; // modification requires `mut`
+\end{lstlisting}
+
+% ============================================================
+\subsection{Nominal vs. Structural Typing}
+% ============================================================
+
+The professor drew a very important distinction between Rust's type system and that of TypeScript.
+
+\begin{examprioritybox}[Nominal vs. Structural Type Equivalence]
+In \textbf{TypeScript}, types use \textbf{structural equivalence}. If you create a type \texttt{Point} with fields \texttt{x: number} and \texttt{y: number}, and then create a type \texttt{Beta} also with fields \texttt{x: number} and \texttt{y: number}, TypeScript considers \texttt{Point} and \texttt{Beta} to be \textbf{the same type}. The fact that you have called them different names is incidental---what matters is the structure. In TypeScript's notation, you write \texttt{type Something = \{ x: number, y: number \}}, which is essentially a \textbf{type alias}.
+
+In \textbf{Rust}, types are \textbf{nominal}. The names \textit{count}. A struct \texttt{Player} with fields \texttt{name: String, health: i32, level: u8} has \textbf{nothing to do} with a struct \texttt{SomeOtherThing} that has exactly the same three fields. They are completely separate, incompatible types.
+
+\textbf{Expected Mastery Level:} High. You must understand that in Rust, two structs with identical field layouts are \textbf{not} interchangeable. The name of the type is part of its identity.
+\end{examprioritybox}
+
+The professor noted that the \textit{usage syntaxes} for populating structs are similar between Rust and TypeScript---curly braces, field-colon-value---but the type semantics are fundamentally different.
+
+% ============================================================
+\subsection{Tuple Structs}
+% ============================================================
+
+In addition to named-field structs (with curly braces), Rust also allows us to express structs where the fields are \textbf{anonymous}---they are represented as a tuple. These are called \textbf{tuple structs}:
+
+\begin{lstlisting}[language=Rust]
+struct Playground(String, i32, i32);
+
+let f = Playground("Central Park".to_string(), 100, 50);
+println!("{}", f.0); // "Central Park"
+println!("{}", f.1); // 100
+println!("{}", f.2); // 50
+\end{lstlisting}
+
+With the tuple notation, the fields have no explicit names. They are accessed by \textbf{positional index}: \texttt{f.0}, \texttt{f.1}, \texttt{f.2}. This syntax is useful when the semantics of the data is obvious and does not need explicit labels. A classic example is a point in 3D space:
+
+\begin{lstlisting}[language=Rust]
+struct Point(f64, f64, f64);
+\end{lstlisting}
+
+Instead of writing \texttt{x:}, \texttt{y:}, \texttt{z:}, it could be sufficiently clear to say that the three numbers that compose the point are naturally in order: x, y, and z (or depth). The professor stressed: ``For the rest, there is no difference. They occupy exactly the same memory, they work the same way. The real distinction is in the readability for the programmer. The tuple struct is less readable, but when the semantics is obvious, it's faster---you have to write fewer things. The struct with named fields helps to understand the semantics more.''
+
+% ============================================================
+\subsection{Unit-Like Structs (Zero-Sized Types)}
+% ============================================================
+
+Rust can also represent types that \textbf{do not occupy any memory at all}. These are called \textbf{Zero-Sized Types} (ZSTs):
+
+\begin{lstlisting}[language=Rust]
+struct Empty;
+\end{lstlisting}
+
+\texttt{Empty} is a type that occupies zero bytes. It is value-free. What sense does it make to have a type that contains nothing inside? The professor explained: ``It can serve in certain situations where I only need a \textbf{marker}---its presence itself tells me something. At the moment, we are happy to take awareness that this exists.''
+
+\begin{insightbox}[Zero-Sized Types You Already Know]
+The professor pointed out that we have already used ZSTs without knowing it. The \textbf{unit type} \texttt{()}, written as open/close parentheses, is another zero-sized type---it is the return type of functions that don't return anything. But why would we also need \texttt{struct Empty;}? Because we might need \textbf{distinct markers} in some situations. These are particularly interesting because they give us the possibility to compile computations \textbf{at compile time}, without having to allocate any memory at runtime. More advanced examples will come in later chapters.
+\end{insightbox}
+
+% ============================================================
+\section{Memory Layout of Structs}
+% ============================================================
+
+\begin{examprioritybox}[{Struct Memory Layout, Padding, and Alignment}]
+Let us go back to our \texttt{Player} struct and analyze how it is laid out in memory. The professor traced this step by step:
+
+\begin{itemize}
+    \item \texttt{name: String} occupies \textbf{24 bytes}. Being a \texttt{String}, there are 8 bytes that point to the heap where the sequence of characters lives, plus 8 bytes that define the capacity (how many more characters could fit), plus 8 bytes for the length (how many characters are actually there).
+    \item \texttt{health: i32} occupies \textbf{4 bytes}.
+    \item \texttt{level: u8} occupies \textbf{1 byte}.
+\end{itemize}
+
+This totals 29 bytes at minimum. But 29 is a ``stupid number'' (the professor's words!) because it is not a multiple of 4 or 8. Modern CPUs do not read memory byte-by-byte---for example, x86 processors read 8 bytes per block, but \textbf{only if those 8 bytes start at an address that is a multiple of 8}. You cannot read in a ``distorted way, a little bit here, a little bit there.'' Therefore, the compiler decides to round up: probably to \textbf{32 bytes}, because it is much more comfortable to manage.
+
+\textbf{Expected Mastery Level:} High. You must understand that the sum of field sizes does not equal the struct size due to alignment and padding.
+\end{examprioritybox}
+
+% AI-IMAGE-REQUEST: A detailed memory layout diagram of the Player struct showing: 24 bytes for String (8 ptr + 8 cap + 8 len), 4 bytes for i32 (health), 1 byte for u8 (level), and 3 bytes of padding to reach 32 bytes total. The String's pointer should have an arrow to a heap buffer containing "Mario".
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/ch05_player_memory_layout.png}
+    \caption{Memory layout of the \texttt{Player} struct. The 24-byte \texttt{String} header (pointer, capacity, length) is followed by a 4-byte \texttt{i32} and a 1-byte \texttt{u8}, with padding bytes added by the compiler for alignment.}
+    \label{fig:player_memory}
+\end{figure}
+
+\paragraph{No Guaranteed Field Order.} A crucial point the professor made is that the compiler is \textbf{free to reorder the fields internally}. The order in which you write \texttt{name}, \texttt{health}, \texttt{level} in your source code does \textbf{not} guarantee that they appear in that same order in physical memory. The compiler chooses the layout that is optimal for the particular architecture you are compiling for:
+
+\begin{itemize}
+    \item Compiling for \textbf{x86}: one arrangement might be optimal.
+    \item Compiling for \textbf{ARM}: a different arrangement might be chosen.
+    \item Compiling for \textbf{PowerPC}: yet another arrangement.
+\end{itemize}
+
+We have \textbf{no guarantees} on the field ordering. The compiler guarantees that the information we put in is certainly there---but \textit{how} it is arranged is the compiler's decision, optimized for the target architecture.
+
+\paragraph{Forcing the Layout with \texttt{\#[repr(C)]}.} In some situations, we \textit{need} to force the memory layout. The professor identified two key scenarios:
+
+\begin{enumerate}
+    \item \textbf{Interoperability}: The data must be shared with code written in other languages, typically C or C++.
+    \item \textbf{Hardware representation}: The data itself is a representation of hardware information---for example, accessing a processor register that must be read in an exact sequence.
+\end{enumerate}
+
+In these situations, we can prepend the attribute \texttt{\#[repr(C)]} to the struct definition:
+
+\begin{lstlisting}[language=Rust]
+#[repr(C)]
+struct Player {
+    name: String,
+    health: i32,
+    level: u8,
+}
+\end{lstlisting}
+
+This tells the compiler: ``use the representation of the C language.'' This guarantees that the fields are laid out in memory in the \textbf{exact order they are declared}, following C's alignment rules. This gives us interoperability with other languages. If we don't need this guarantee, we can leave it off and let the compiler freely choose the optimal disposition.
+
+\paragraph{Inspecting Memory at Runtime.} Rust provides low-level functions in \texttt{std::mem} to inspect how values are laid out:
+
+\begin{lstlisting}[language=Rust]
+use std::mem;
+
+let p = Player {
+    name: "Mario".to_string(),
+    health: 25,
+    level: 1,
+};
+
+// How many bytes does this value occupy?
+println!("Size: {} bytes", mem::size_of_val(&p));
+
+// What alignment does it require?
+// Returns 1 if any address, 2 if even addresses only,
+// 4 if multiples of 4, 8 if multiples of 8, etc.
+println!("Alignment: {} bytes", mem::align_of_val(&p));
+\end{lstlisting}
+
+The professor explained: ``\texttt{align\_of\_val} returns 1 if that value can start at any address, 2 if it can only start at an even address, 4 if it can only start at a multiple-of-4 address, 8 if it can only start at a multiple-of-8 address. Usually it stops there, because there are no alignment requirements above 8 on most architectures.'' And \texttt{size\_of\_val} tells us exactly how many bytes a particular value occupies.
+
+% ============================================================
+\section{Visibility, Encapsulation, and the \texttt{pub} Keyword}
+% ============================================================
+
+When we introduce a struct with named fields, we have the possibility to control the visibility of each field individually.
+
+\paragraph{Default Visibility.} By default, the fields of a structure are visible \textbf{only to code present in the current module and its sub-modules}. This is a private-by-default policy.
+
+\paragraph{Making Fields Public.} To grant wider visibility, we prefix a field with the keyword \texttt{pub} (short for ``public''). The struct itself must also be public if external modules need to know about it:
+
+\begin{lstlisting}[language=Rust]
+pub struct Player {
+    pub name: String,   // visible to everyone
+    health: i32,        // private (current module only)
+    level: u8,          // private (current module only)
+}
+\end{lstlisting}
+
+\begin{insightbox}[Public Struct, Private Fields]
+Note that it is perfectly valid to have a struct that is \textbf{public} without its fields being public. This means that external code can know the type exists and can work with instances of it, but \textbf{cannot see or directly access what is inside}. The professor gave an example: ``What happens with \texttt{Vec}? \texttt{Vec} is a public struct, where its fields (which we know are a pointer, a capacity, and a size) are \textbf{not} public. \texttt{Vec} manipulates them internally.'' This is the foundation of encapsulation in Rust.
+\end{insightbox}
+
+The general pattern is to define the struct in a module and control what is visible:
+
+\begin{lstlisting}[language=Rust]
+mod something {
+    pub struct MyStruct {
+        // fields are private by default
+        internal_data: Vec<u8>,
+    }
+
+    impl MyStruct {
+        pub fn new() -> Self {
+            MyStruct { internal_data: Vec::new() }
+        }
+        // ... public methods that control access ...
+    }
+}
+\end{lstlisting}
+
+This implements the \textbf{principle of encapsulation}: everyone at home does their own thing, and others don't need to peek inside. If there is a struct with fields I cannot manipulate directly, I can interact with it through \textbf{methods} that have internal visibility, just as happens in object-oriented programming when we build a class with private fields and public methods.
+
+\begin{exambox}[Encapsulation in Rust]
+The professor made a key observation about Rust's relationship with object-oriented programming: ``Rust is not an object language. It has many characteristics of object languages. In particular, it implements the concept of \textbf{encapsulation}, implements the concept of \textbf{polymorphism}, but \textbf{rejects} and has no concept of \textbf{inheritance}.'' We will explore the reasoning behind this rejection shortly.
+\end{exambox}
+
+% ============================================================
+\section{Methods: Adding Behavior with \texttt{impl} Blocks}
+% ============================================================
+
+If a struct has private fields, how do we interact with its contents? By linking \textbf{methods} to the struct. Methods are functions defined within an \texttt{impl} block that have visibility of the struct's internal state.
+
+\subsection{The Separation of Data and Behavior}
+
+In many object-oriented languages (Java, C++, TypeScript), the class declaration contains \textit{both} the data fields and the methods in one block. Rust takes a deliberately different approach:
+
+\begin{itemize}
+    \item The \texttt{struct} block declares \textbf{only the data}.
+    \item A separate \texttt{impl} block attaches \textbf{the methods}.
+\end{itemize}
+
+The professor contrasted this explicitly: ``In our object-oriented language, we have written the class with the \texttt{class} keyword, and inside the block there are the various fields and the various methods, even mixed. The choice of Rust, instead, is to have two separate parts: I introduce the struct, I declare only the data. Then I can have an \texttt{impl} block which takes the name of the structure and adds the methods.''
+
+\begin{lstlisting}[language=Rust]
+pub struct Point {
+    x: f64,
+    y: f64,
+}
+
+impl Point {
+    // Constructor (associated function - no self parameter)
+    pub fn new(x: f64, y: f64) -> Self {
+        Point { x, y }
+    }
+
+    // Method: immutable borrow of the receiver
+    pub fn length(&self) -> f64 {
+        ((self.x * self.x) + (self.y * self.y)).sqrt()
+    }
+}
+\end{lstlisting}
+
+Notice that \texttt{Point} is public, but \texttt{x} and \texttt{y} have no \texttt{pub} prefix---they are private. Outside the current module, nobody has direct access to \texttt{x} or \texttt{y}. The \texttt{impl} block is where we provide controlled access.
+
+\subsection{The Three Method Receivers}
+
+Methods are recognized because in their parameter list they have \texttt{self}. The \texttt{self} parameter represents the \textbf{instance} on which the method operates (the ``receiver''). Unlike languages like Java or JavaScript, where \texttt{this} is implicit and handled by the compiler, in Rust we \textbf{make it explicit}. Why? Because we must specify \textit{what type of access} we are taking on that \texttt{self}:
+
+\begin{examprioritybox}[The Three Types of \texttt{self}]
+\begin{enumerate}
+    \item \texttt{\&self} (\textbf{immutable borrow}): ``This method has the right to read all fields of my struct, but cannot modify them.'' It takes the receiver as a \textbf{shared reference}. The usual borrowing rules apply: multiple \texttt{\&self} borrows can coexist.
+
+    \item \texttt{\&mut self} (\textbf{mutable borrow}): ``This method can access all the fields of the struct \textbf{and can modify them}.'' It takes the receiver as an \textbf{exclusive reference}. For the duration of the method's execution, the original variable is inaccessible. Only one mutable borrow can exist at a time, and it cannot coexist with immutable borrows.
+
+    \item \texttt{self} (\textbf{ownership transfer}): ``This method \textbf{consumes} the receiver, takes ownership, and transforms it into something else.'' After calling such a method, the original variable is \textbf{destroyed}---it can no longer be used.
+\end{enumerate}
+
+The \texttt{self} parameter, if present, \textbf{must be the first} in the parameter list. Its type is implicitly the type being implemented (e.g., in \texttt{impl Point}, \texttt{self} is of type \texttt{Point}).
+
+\textbf{Expected Mastery Level:} Very High. You must intuitively know which receiver to use and what happens to the original instance after each kind of method call.
+\end{examprioritybox}
+
+\subsection{A Complete Example: \texttt{mirror}, \texttt{length}, and \texttt{scale}}
+
+Let us see all three receivers in action:
+
+\begin{lstlisting}[language=Rust]
+pub struct Point {
+    x: f64,
+    y: f64,
+}
+
+impl Point {
+    // Takes ownership of self, destroys the original, returns a new Point
+    pub fn mirror(self) -> Self {
+        Point { x: self.y, y: self.x }
+    }
+
+    // Borrows self immutably: reads but does not modify
+    pub fn length(&self) -> f64 {
+        ((self.x * self.x) + (self.y * self.y)).sqrt()
+    }
+
+    // Borrows self mutably: modifies the coordinates in place
+    pub fn scale(&mut self, factor: f64) {
+        self.x *= factor;
+        self.y *= factor;
+    }
+}
+\end{lstlisting}
+
+Now let us trace through the usage step by step, exactly as the professor did:
+
+\begin{lstlisting}[language=Rust]
+let p1 = Point::new(3.0, 4.0);    // create point (3, 4)
+
+// mirror() takes `self` (ownership) -> p1 is consumed!
+let p2 = p1.mirror();              // p2 = Point(4, 3). p1 no longer exists.
+
+// length() takes `&self` (immutable borrow) -> p2 is temporarily borrowed
+let l1 = p2.length();              // l1 = 5.0. p2 is returned after the call.
+
+// scale() takes `&mut self` (mutable borrow) -> p2 must be `mut`
+let mut p2 = p2;                   // rebind as mutable
+p2.scale(2.0);                     // p2 is now (8, 6). Exclusive access during call.
+
+// After scale returns, the mutable borrow ends. p2 is accessible again.
+let l2 = p2.length();              // l2 = sqrt(64+36) = sqrt(100) = 10.0
+\end{lstlisting}
+
+\begin{memoryblock}[Tracing the Borrow Dance]
+\begin{enumerate}
+    \item \texttt{p1.mirror()}: The compiler sees that \texttt{mirror} takes \texttt{self} (ownership). \texttt{p1} is \textbf{moved} into the method. After this call, \texttt{p1} no longer exists. The method creates and returns a new \texttt{Point}.
+    \item \texttt{p2.length()}: The compiler sees that \texttt{length} takes \texttt{\&self}. It automatically creates an immutable reference \texttt{\&p2}, passes it to the method, and the reference is destroyed when the method returns. \texttt{p2} remains fully usable.
+    \item \texttt{p2.scale(2.0)}: The compiler sees that \texttt{scale} takes \texttt{\&mut self}. It automatically creates a mutable reference \texttt{\&mut p2}, which grants exclusive read-write access for the duration of the call. No other code can access \texttt{p2} during this time. The coordinates are multiplied by 2 in place. The mutable borrow ends when the method returns.
+    \item \texttt{p2.length()}: After the mutable borrow has ended, we can borrow \texttt{p2} immutably again. The new length reflects the scaled coordinates.
+\end{enumerate}
+\end{memoryblock}
+
+\subsection{Method Calls Are Syntactic Sugar}
+
+The professor made a very important theoretical point: ``Methods don't really exist. They are just functions.'' The call:
+
+\begin{lstlisting}[language=Rust]
+let l1 = p2.length();
+\end{lstlisting}
+
+is automatically translated by the compiler into:
+
+\begin{lstlisting}[language=Rust]
+let l1 = Point::length(&p2);
+\end{lstlisting}
+
+\texttt{length} is a function inside the \texttt{Point} namespace. When we write \texttt{p2.length()}, the compiler translates this into \texttt{Point::length(\&p2)}---the function \texttt{Point::length} receiving an explicit reference to \texttt{p2}.
+
+\begin{insightbox}[Methods Are Just Functions --- In Every Language]
+``This is valid in all languages---C++, Java, TypeScript. The concept of method is only a syntactic sugar, because compilers know only variables and functions. This is their job. All other abstractions are just more comfortable ways to give us more readable, easier to manipulate notations. But internally, in the assembler, there is the \texttt{call} instruction and the \texttt{move} instruction, and that's it.''
+\end{insightbox}
+
+\subsection{Constructors: The \texttt{new} Convention}
+
+In Java, a constructor is a special method identified by the \texttt{new} keyword. In Rust, there is \textbf{no special constructor syntax}. Any method inside an \texttt{impl} block that returns \texttt{Self} (with capital S, meaning ``the type we are implementing'') can serve as a constructor:
+
+\begin{lstlisting}[language=Rust]
+impl Point {
+    fn new(x: f64, y: f64) -> Self {
+        Point { x, y }
+    }
+}
+\end{lstlisting}
+
+The name \texttt{new} is not a keyword---it is a convention, chosen because it evokes the idea from other languages. The professor noted: ``You noticed when we created vectors, we always wrote \texttt{Vec::new()}. We were explicitly invoking the \texttt{new} method of \texttt{Vec}.''
+
+\paragraph{Multiple Constructors.} Since Rust does \textbf{not have function overloading} (you cannot have two methods with the same name but different parameters), if you need multiple constructors, you give them different names. The convention is:
+
+\begin{itemize}
+    \item \texttt{new()}: the simplest constructor, often no parameters or minimal parameters.
+    \item \texttt{with\_capacity(n)}: a constructor that pre-allocates space.
+    \item \texttt{with\_something(...)}: names that make it clear what the parameter represents.
+\end{itemize}
+
+For example, for \texttt{Vec}:
+\begin{lstlisting}[language=Rust]
+let v1 = Vec::<i32>::new();            // empty vector
+let v2 = Vec::<i32>::with_capacity(100); // empty vector with 100 slots pre-allocated
+\end{lstlisting}
+
+\subsection{Associated Functions (Static Methods)}
+
+Functions inside an \texttt{impl} block that do \textbf{not have \texttt{self}} as a parameter are called \textbf{associated functions}. They serve two purposes:
+
+\begin{enumerate}
+    \item \textbf{Constructors}: if they return \texttt{Self}, they act as constructors (like \texttt{new}).
+    \item \textbf{Utility functions}: generic functions related to the type but not operating on a specific instance.
+\end{enumerate}
+
+Associated functions are called using the double colon syntax: \texttt{Point::new(3.0, 4.0)}.
+
+% ============================================================
+\section{Why Rust Rejects Inheritance}
+% ============================================================
+
+The professor devoted considerable time to explaining why Rust deliberately omits inheritance, a cornerstone of many object-oriented languages.
+
+\begin{insightbox}[The Rise and Fall of Inheritance]
+``After the fall of the wave in the 1990s around the concept of inheritance---which seemed to solve all the problems of the world, at least of programming---we understood that inheritance is a bit of a double-edged sword.''
+
+The problems with inheritance include:
+
+\begin{enumerate}
+    \item \textbf{Unwanted coupling}: In Java, single inheritance means everything derives from \texttt{Object}. But \texttt{Object} contains methods like \texttt{equals()}, \texttt{toString()}, \texttt{wait()}, \texttt{notify()}, \texttt{notifyAll()} (three versions of \texttt{wait}!). Why does every object need \texttt{wait()}? Because that object \textit{could} be used for concurrency synchronization. But should a \texttt{Point} know about threading?
+
+    \item \textbf{The Diamond of Death}: When a class inherits from two superclasses that themselves share a common base class, the derived class receives the base class's members through two different paths, potentially modified in different ways. ``It's like a child whose mother has green eyes and father has blue eyes---what color does the child have? Purple? Both green and blue---how?'' This is called the \textbf{Diamond of Death}, and it creates many more problems than it solves.
+
+    \item \textbf{Forced declarations}: Inheritance forces you to declare a parent class, and building healthy hierarchies is extremely difficult in practice.
+\end{enumerate}
+\end{insightbox}
+
+\begin{insightbox}[The Origin of Rust: Graydon Hoare's Elevator]
+The professor shared the colorful origin story of Rust: ``Graydon Hoare, the Rust inventor, worked at Mozilla and programmed in C++. One day, he came home to his high-rise apartment building to find the electricity was out. He had to climb 28 floors on foot. In his frustration and the tedium of climbing, he began thinking about a better language. The thing kept going for about two years---he kept refining the idea---and then Rust started to emerge, first as a personal project, then Mozilla saw it as useful, put money into it, and eventually it became a foundation.'' Rust was born from a very concrete frustration: a bug-prone C++ codebase and 28 flights of stairs. Hoare's key decision was: ``It was better to get rid of classes and inheritance.'' This does not mean getting rid of \textit{methods}---only getting rid of \textit{inheritance}.
+\end{insightbox}
+
+% ============================================================
+\section{The \texttt{Drop} Trait: Destructors and RAII}
+% ============================================================
+
+Within a data structure, sometimes the values have a meaning that goes beyond their memory representation. The professor explained: ``If I have a number 42, it could be just an integer, or it could be a \textbf{file descriptor}. If it's an integer, just throw it away and release the memory. If it's a file descriptor, I probably want to \textbf{close that file} before discarding the number.''
+
+Rust doesn't automatically know what our values \textit{mean}. To handle cleanup responsibilities, Rust provides the \textbf{\texttt{Drop} trait}---a mechanism for defining a destructor.
+
+\subsection{How \texttt{Drop} Works}
+
+The \texttt{Drop} trait defines a single method, \texttt{drop(\&mut self)}, which is \textbf{automatically called by the compiler} when an object is about to cease to exist:
+
+\begin{lstlisting}[language=Rust]
+struct Shape {
+    name: String,
+    sides: u32,
+}
+
+impl Drop for Shape {
+    fn drop(&mut self) {
+        println!("Dropping shape: {}", self.name);
+        // Perform cleanup actions here (close files, release resources, etc.)
+    }
+}
+\end{lstlisting}
+
+\begin{insightbox}[The Drop Method Is Like a Will]
+The professor used a vivid analogy: ``It's a bit like writing a will. You write it, but it's not \textit{your} turn to execute it---someone else does. `I leave my bicycle to this person, my figurine collection to that person.' If you have something to bequeath, you have the possibility to write the will. You will never call \texttt{drop} yourself. But you are sure that the compiler will call it right before releasing the memory that the object is using. It's the final moment that allows you to release, or make all necessary actions, to guarantee a correct transfer of property.''
+\end{insightbox}
+
+\subsection{The RAII Pattern}
+
+The idea that in the \textbf{constructor} we prepare resources we need, and in the \textbf{destructor} we free them, is known as the \textbf{RAII pattern}---\textit{Resource Acquisition Is Initialization}.
+
+The professor connected this to the file exercise: ``If you think about the exercise you did last week, you opened files, you wrote to a new file, but you never \textit{closed} the file. This is because the \texttt{Drop} trait handles it automatically: when you arrive at the bottom of your function where the file variable goes out of scope, the compiler releases it, but immediately \textit{before} releasing it, it calls the \texttt{drop} method, inside which is written `tell the operating system to perform \texttt{file\_close}', after which it throws away the memory. This is the mechanism.''
+
+\subsection{Implementing Drop}
+
+While normal methods are defined in a plain \texttt{impl Type} block, the \texttt{Drop} trait uses a special syntax:
+
+\begin{lstlisting}[language=Rust]
+// Normal methods
+impl Shape {
+    fn new(name: &str, sides: u32) -> Self {
+        Shape { name: name.to_string(), sides }
+    }
+}
+
+// Destructor: special syntax
+impl Drop for Shape {
+    fn drop(&mut self) {
+        println!("Cleaning up shape: {}", self.name);
+    }
+}
+\end{lstlisting}
+
+The block is written as \texttt{impl Drop for Shape}---``implement the \texttt{drop} method \textit{for} this type.'' Inside, you describe what you think is necessary to do before the value is destroyed. When a \texttt{Shape} object reaches the closing curly brace that establishes the end of its lifetime, \texttt{drop()} will be invoked automatically.
+
+\begin{warningbox}[Drop and Copy Are Mutually Exclusive]
+The \texttt{Drop} trait \textbf{can only be implemented by structs that do NOT implement the \texttt{Copy} trait}. \texttt{Copy} and \texttt{Drop} cannot coexist. Why? Because \texttt{Copy} implies that a simple bitwise duplication is sufficient and safe. But \texttt{Drop} implies that the value holds a resource requiring special cleanup. If a value could be both copied (bit-for-bit) and dropped (with cleanup), you would get \textbf{double-free errors}---the cleanup code would run on multiple copies of the same resource.
+\end{warningbox}
+
+% ============================================================
+\section{Structs Are Product Types}
+% ============================================================
+
+Before moving to enums, the professor introduced an important piece of type theory terminology.
+
+Structs are called \textbf{Product Types}. Why? Because their \textbf{domain}---the set of all possible values---is the \textbf{Cartesian product} of the domains of all their fields.
+
+\begin{lstlisting}[language=Rust]
+struct Point {
+    x: i32,
+    y: i32,
+}
+\end{lstlisting}
+
+The domain of \texttt{Point} is the Cartesian product of all 32-bit integers times all 32-bit integers: all possible pairs of integers from approximately $-2$ billion to $+2$ billion. Hence, it is a \textbf{product type}.
+
+% ============================================================
+\section{Enums: Expressing Alternatives (Sum Types)}
+% ============================================================
+
+While structs combine fields with ``AND'' semantics (a \texttt{Player} has a name \textit{and} health \textit{and} a level), enums express ``OR'' semantics: a value is one variant \textit{or} another.
+
+Enums are \textbf{Sum Types} because their domain is the \textbf{union} (or sum) of the domains of the things that represent them.
+
+\subsection{Simple Enums: Labels with Optional Values}
+
+At their most basic, enums are a way of representing named constants:
+
+\begin{lstlisting}[language=Rust]
+enum HttpResponse {
+    Ok = 200,
+    NotFound = 404,
+    InternalError = 500,
+}
+\end{lstlisting}
+
+These are three values: \texttt{Ok}, or \texttt{NotFound}, or \texttt{InternalError}. The sum of the three domains is just these three constants. The professor explained: ``If I hadn't written \texttt{= 200, = 404, = 500}, internally these would become 0, 1, 2. So the enum, in its elementary version, becomes small integers numbered in sequence. I have the possibility of forcing these numbers to be something different---so I choose the HTTP status codes---but in the end, it's a way to not manipulate raw numbers that I might confuse with arithmetic values. They are only \textbf{distinctive codes} for a semantic purpose.''
+
+\subsection{Enums with Data Payloads}
+
+Here is where Rust's enums become far more powerful than those in C or Java. Each variant can carry its own \textbf{distinct data payload}:
+
+\begin{lstlisting}[language=Rust]
+enum HttpResponse {
+    Ok,                                    // no additional data
+    NotFound(String),                      // carries the name of the missing resource
+    InternalError(String, Vec<u8>),        // carries a description AND raw data
+}
+\end{lstlisting}
+
+The professor walked through the semantics: ``If it's \texttt{Ok}, there are no other details. If I say \texttt{NotFound}, I add a string which is probably the name of the thing I didn't find. And if I say \texttt{InternalError}, I give you a more articulated structure: not just the description (a string), but also data in the form of a byte vector that allows me to describe better why things went wrong internally.''
+
+The \texttt{HttpResponse} type can hold \texttt{Ok}, \textit{or} \texttt{NotFound} encapsulating a string, \textit{or} \texttt{InternalError} encapsulating a string composed with a vector of bytes. This is a kind of sum: the total domain is the union of all three variant domains.
+
+\begin{insightbox}[Enums Can Also Have Methods]
+Just like structs, enums can have \texttt{impl} blocks with methods:
+\begin{lstlisting}[language=Rust]
+impl HttpResponse {
+    fn is_success(&self) -> bool {
+        matches!(self, HttpResponse::Ok)
+    }
+
+    fn description(&self) -> &str {
+        match self {
+            HttpResponse::Ok => "Success",
+            HttpResponse::NotFound(_) => "Not Found",
+            HttpResponse::InternalError(_, _) => "Internal Error",
+        }
+    }
+}
+\end{lstlisting}
+``Not only do I have the possibility of representing alternative structures, but I also have the possibility of linking methods that allow me to do some work on top.''
+\end{insightbox}
+
+\subsection{Memory Layout of Enums: Tagged Unions}
+
+How does the compiler represent an enum with heterogeneous variants in memory? The professor explained this with a concrete example:
+
+\begin{lstlisting}[language=Rust]
+enum Shape {
+    Square(f32),           // tag 0, payload: 4 bytes
+    Point(f64, f64),       // tag 1, payload: 16 bytes
+    Empty,                 // tag 2, payload: 0 bytes
+}
+\end{lstlisting}
+
+\begin{examprioritybox}[Enum Memory Layout: Tagged Union]
+The compiler examines all the variants that can end up inside the enum and allocates a memory space that is the \textbf{largest of the possible alternatives}, plus one or more bytes to use as a \textbf{distinctive tag} (discriminant).
+
+For the \texttt{Shape} enum above:
+\begin{itemize}
+    \item The compiler assigns tag 0 for \texttt{Square}, tag 1 for \texttt{Point}, tag 2 for \texttt{Empty}.
+    \item The largest variant is \texttt{Point(f64, f64)} which needs $2 \times 8 = 16$ bytes.
+    \item Plus the tag (1 byte).
+    \item Total: 17 bytes minimum, but the compiler will likely round to a comfortable alignment, probably \textbf{24 bytes}.
+\end{itemize}
+
+The tag is always at the beginning. For \texttt{Square(5.0)}: the first byte(s) contain the tag value 0, followed by the 4 bytes of the \texttt{f32}, followed by padding (unused bytes, because the slot is sized for the largest variant). For \texttt{Empty}: the first byte(s) contain the tag value 2, followed by \textbf{all padding}---no payload data at all.
+
+\textbf{Expected Mastery Level:} High. You must be able to calculate the approximate size of an enum and explain why it equals the size of the largest variant plus tag plus alignment padding.
+\end{examprioritybox}
+
+% AI-IMAGE-REQUEST: A diagram showing the memory layout of enum Shape with three variants. Show three rectangular memory blocks of equal size (say 24 bytes each). Block 1: tag=0, 4 bytes f32 data, rest is padding. Block 2: tag=1, 16 bytes f64+f64 data, rest is padding. Block 3: tag=2, all padding (no data). Label the tag section and the payload/padding sections.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/ch05_enum_tagged_union_layout.png}
+    \caption{Memory layout of \texttt{enum Shape}. All variants occupy the same total space. The tag byte identifies which variant is active, and the remaining space holds the payload (or padding if the variant's data is smaller than the largest variant).}
+    \label{fig:enum_memory_layout}
+\end{figure}
+
+% ============================================================
+\section{Pattern Matching with \texttt{match}}
+% ============================================================
+
+Enums work \textbf{magnificently} with the \texttt{match} construct, which allows us to safely inspect which variant is active and extract its payload:
+
+\begin{lstlisting}[language=Rust]
+enum Shape {
+    Square(f64),
+    Circle(f64),
+    Rectangle(f64, f64),
+}
+
+let s = Shape::Circle(5.0);
+
+match s {
+    Shape::Square(side) => {
+        println!("Square with side {}", side);
+    }
+    Shape::Circle(radius) => {
+        println!("Circle with radius {}", radius);
+    }
+    Shape::Rectangle(w, h) => {
+        println!("Rectangle {}x{}", w, h);
+    }
+}
+\end{lstlisting}
+
+The \texttt{match} construct is \textbf{exhaustive}: the compiler refuses to compile if you do not handle every possible variant. If you add a new variant to \texttt{Shape} later (say \texttt{Triangle(f64, f64, f64)}), the compiler will force you to handle it in every \texttt{match} block. This statically eliminates an entire class of runtime errors.
+
+\subsection{The \texttt{if let} Construct}
+
+Sometimes, using a full \texttt{match} statement is overkill because you are only interested in \textbf{one specific variant} and want to ignore the rest. For these scenarios, Rust provides \texttt{if let}:
+
+\begin{lstlisting}[language=Rust]
+if let Shape::Square(side) = s {
+    println!("Found a square with side: {}", side);
+}
+\end{lstlisting}
+
+The professor explained: ``\texttt{if let} is like a \texttt{match} in which instead of having to split all the clauses, we just check a single case. If \texttt{s} is a \texttt{Square}, we do certain things. This is what I need when I'm interested in trying a single alternative, instead of having to handle all 27.''
+
+\subsection{Destructuring Structs}
+
+The professor also briefly mentioned that \texttt{match} can be used with structs for destructuring---extracting internal fields directly:
+
+\begin{lstlisting}[language=Rust]
+struct Point {
+    x: f64,
+    y: f64,
+}
+
+let p = Point { x: 3.0, y: 4.0 };
+
+let Point { x, y } = p; // destructure: x = 3.0, y = 4.0
+println!("x = {}, y = {}", x, y);
+\end{lstlisting}
+
+This is similar to destructuring in JavaScript/TypeScript---a convenient way to extract multiple fields into individual variables in a single statement.
+
+% ============================================================
+\section{Summary: Product Types vs. Sum Types}
+% ============================================================
+
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Concept} & \textbf{Structs (Product Types)} & \textbf{Enums (Sum Types)} \\
+\hline
+Semantics & A \textit{and} B \textit{and} C & A \textit{or} B \textit{or} C \\
+\hline
+Domain & Cartesian product of field domains & Union of variant domains \\
+\hline
+Example & \texttt{Player \{ name, health, level \}} & \texttt{HttpResponse \{ Ok, NotFound, ... \}} \\
+\hline
+Memory & Sum of field sizes + padding & Largest variant + tag + padding \\
+\hline
+Access & Dot notation (\texttt{s.field}) & Pattern matching (\texttt{match}) \\
+\hline
+Type Theory Name & Product Type & Sum Type / Tagged Union \\
+\hline
+\end{tabular}
+\end{center}
+
+% ============================================================
+\section*{Exam Relevance and Recurrence}
+% ============================================================
+
+\begin{examprioritybox}[Overall Exam Focus for This Chapter]
+\textbf{Score:} Very High
+
+\textbf{Key areas frequently tested:}
+\begin{itemize}
+    \item \textbf{Nominal vs. Structural Typing:} Explain why two structs with identical fields are not interchangeable in Rust.
+    \item \textbf{Memory Layout:} Calculate the size of a struct/enum considering padding, alignment, and the tagged union model. Know what \texttt{\#[repr(C)]} does and when to use it.
+    \item \textbf{Method Receivers:} Distinguish \texttt{self} vs \texttt{\&self} vs \texttt{\&mut self} and predict what happens to the original variable after each kind of method call.
+    \item \textbf{Ownership with Struct Update Syntax:} Understand when the \texttt{..} operator moves vs copies fields.
+    \item \textbf{Drop Trait and RAII:} Explain why \texttt{Drop} and \texttt{Copy} are mutually exclusive. Describe the RAII pattern.
+    \item \textbf{Enum as Tagged Union:} Compute the memory footprint of an enum (largest variant + discriminant + padding).
+    \item \textbf{Exhaustive Pattern Matching:} Explain why \texttt{match} prevents a class of bugs that \texttt{if-else} chains cannot.
+\end{itemize}
+\end{examprioritybox}
+
+% ============================================================
+\section*{Domande ed Esercizi da Esami Passati}
+% ============================================================
+
+\begin{exambox}[Domanda 1]
+All'interno di un programma è definita la seguente struttura dati\\
+\texttt{struct Bucket \{ data: Vec<i32>, threshold: Option<i32> \}}\\
+Usando il debugger si è determinato che, per una istanza di Bucket, essa è memorizzata all'indirizzo \texttt{0x00006000014ed2c0}.\\
+Osservando la memoria presente a tale indirizzo, viene mostrato il seguente contenuto (per blocchi di 32bit):\\
+\texttt{308a6e01 00600000 03000000 00000000 03000000 00000000 01000000 0a000000}\\
+Cosa è possibile dedurre relativamente ai valori contenuti dei vari campi della singola istanza?
+
+\textbf{Risposta:} \\
+In base ai concetti di \textbf{Memory Layout} discussi nel capitolo:
+\begin{itemize}
+    \item La struttura è composta da un \texttt{Vec<i32>} e da un'enum \texttt{Option<i32>}. Il compilatore alloca la memoria affiancando i campi (con possibile riordino e padding).
+    \item Il \texttt{Vec} occupa 24 byte: 8 byte per il puntatore all'heap (come spiegato per la struttura \texttt{String}), 8 byte per la capacità e 8 byte per la lunghezza.
+    \item L'enum \texttt{Option} (essendo un \textit{Tagged Union} o \textit{Sum Type}) occupa lo spazio del variant più grande (i 4 byte di \texttt{i32}) più un tag per distinguere le varianti, raggiungendo con il padding 8 byte. In totale, la struttura occupa 32 byte.
+    \item I primi due blocchi da 32 bit (\texttt{308a6e01 00600000}) formano il puntatore a 64 bit all'heap dove risiedono i dati.
+    \item I successivi due blocchi (\texttt{03000000 00000000}) formano un intero a 64 bit di valore 3, che rappresenta la \textbf{capacità} del \texttt{Vec}.
+    \item I successivi due blocchi (\texttt{03000000 00000000}) formano un altro intero a 64 bit di valore 3, che rappresenta la \textbf{lunghezza} attuale del \texttt{Vec}.
+    \item Il settimo blocco (\texttt{01000000}) è il \textbf{tag} dell'enum \texttt{Option} (indica la variante con valore, ovvero \texttt{Some}).
+    \item L'ottavo blocco (\texttt{0a000000}) è il \textbf{payload} dell'enum, ovvero il valore esadecimale \texttt{0x0a} (10 in decimale) rappresentato come \texttt{i32}.
+\end{itemize}
+Deduciamo quindi che il \texttt{Vec} ha 3 elementi (con capacità pari a 3) e che la soglia è impostata a \texttt{Some(10)}.
+\end{exambox}
+
+\begin{exambox}[Domanda 2]
+Dato ii seguente frammento di codice Rust (ogni linea e preceduta dal suo indice)\\
+1. \texttt{struct Point \{}\\
+2. \texttt{x: i16,}\\
+3. \texttt{y: i16,}\\
+4. \texttt{\}}\\
+5. 
+
+\textbf{Risposta:} \\
+In base ai concetti discussi nel capitolo per quanto riguarda le strutture (\textit{Product Types}):
+\begin{itemize}
+    \item \textbf{Type System Nominale:} Il compilatore registra un nuovo \textit{user-defined type} chiamato \texttt{Point}. Essendo il typing in Rust nominale (e non strutturale come in TypeScript), un'altra struct con gli stessi identici campi (\texttt{x} e \texttt{y}) ma con un nome diverso sarà considerata un tipo completamente incompatibile.
+    \item \textbf{Product Type (Struct):} \texttt{Point} è un \textit{Product Type} perché aggrega campi eterogenei (in questo caso omogenei) con semantica "AND" (possiede una coordinata $x$ \textit{e} una coordinata $y$).
+    \item \textbf{Memory Layout e Padding:} I due campi di tipo \texttt{i16} occupano 2 byte ciascuno. La struct richiederà almeno 4 byte. Non vi sono garanzie assolute sull'ordine in cui \texttt{x} e \texttt{y} saranno disposti fisicamente in memoria, poiché il compilatore è libero di ottimizzare e riordinare il layout (a meno di non forzarlo tramite l'attributo \texttt{\#[repr(C)]}).
+\end{itemize}
+\end{exambox}

@@ -1,0 +1,14 @@
+[package]
+name = "lab01"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "my_implementation"
+path = "src/my_implementation/main.rs"
+
+[[bin]]
+name = "solution"
+path = "src/solution/main.rs"
+
+[dependencies]
