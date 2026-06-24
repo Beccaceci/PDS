@@ -1,2 +1,18 @@
-# PDS
-This repository includes some useful materials, such as exams resolution or study guides, for the course of Programmazione di Sistema attended at Politecnico di Torino
+# PDS (Programmazione di Sistema)
+
+This repository includes useful materials, such as exam resolutions, study guides, and lab guides, for the course **Programmazione di Sistema** attended at Politecnico di Torino.
+
+## Repository Structure
+
+The repository is divided into two main sections:
+
+### 1. OS INTERNALS
+This section covers the internal workings of operating systems. It includes:
+- **EXAMS**: Past exam papers along with their resolutions.
+- **LABS**: Lab guides and resources (e.g., OS161).
+
+### 2. API PROGRAMMING
+This section covers system programming APIs. It includes:
+- **EXAMS**: Past exam papers along with their resolutions.
+- **STUDY_GUIDE**: Comprehensive study guide for the API programming section.
+- **LABS**: Lab materials and exercises.
