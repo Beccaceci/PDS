@@ -166,12 +166,11 @@ mod concurrent_cache {
             let (lock, cvar) = &*self.state;
             let mut state = lock.lock().unwrap();
 
-            if state.map.get(_key).is_some() {
-                state.map.get(_key).replace(&(Arc::new(value.to_string()), Instant::now() + self.duration));
-            }
-            else {
-                state.map.insert(_key.to_string(), (Arc::new(value.to_string()), Instant::now() + self.duration));
-            }
+            state.map.insert(
+                _key.to_string(),
+                (Arc::new(value.to_string()), Instant::now() + self.duration)
+            );
+
             drop(state);
             cvar.notify_one();
         }
