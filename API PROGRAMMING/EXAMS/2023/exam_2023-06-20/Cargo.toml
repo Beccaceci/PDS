@@ -1,0 +1,7 @@
+[package]
+name = "exam_2023-06-20"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+crossbeam = "0.8.4"

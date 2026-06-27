@@ -16,3 +16,6 @@ texput.log
 
 # macOS
 .DS_Store
+
+# Rust
+**/target/

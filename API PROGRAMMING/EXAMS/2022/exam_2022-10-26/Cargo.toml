@@ -1,0 +1,6 @@
+[package]
+name = "exam_2022-10-26"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
