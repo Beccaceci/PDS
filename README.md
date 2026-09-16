@@ -16,3 +16,5 @@ This section covers system programming APIs. It includes:
 - **EXAMS**: Past exam papers along with their resolutions.
 - **STUDY_GUIDE**: Comprehensive study guide for the API programming section.
 - **LABS**: Lab materials and exercises.
+- **SIMULATIONS**: 55 high-complexity, trait-driven Rust exam simulations with comprehensive test suites, architectural reverse-engineering, and a 100% type-coverage traceability matrix.
+
