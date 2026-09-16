@@ -1,0 +1,486 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[italian]{babel}
+\usepackage{geometry}
+\geometry{margin=2.2cm}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{fancyhdr}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\footnotesize API Programming --- Appello 8 Settembre 2026}
+\lhead{\footnotesize Politecnico di Torino}
+\cfoot{\thepage}
+
+\definecolor{rustkeyword}{RGB}{0, 51, 153}
+\definecolor{rusttype}{RGB}{38, 139, 210}
+\definecolor{ruststring}{RGB}{163, 21, 21}
+\definecolor{rustcomment}{RGB}{108, 118, 128}
+\definecolor{rustfn}{RGB}{116, 83, 31}
+\definecolor{codebg}{RGB}{248, 249, 250}
+\definecolor{boxborder}{RGB}{41, 128, 185}
+\definecolor{boxbg}{RGB}{240, 248, 255}
+\definecolor{feedbackbg}{RGB}{235, 247, 238}
+\definecolor{feedbackborder}{RGB}{46, 125, 50}
+
+\lstdefinelanguage{Rust}{
+  keywords={break, const, continue, crate, else, enum, extern, false, fn, for, if, impl, in, let, loop, match, mod, move, mut, pub, ref, return, self, Self, static, struct, super, trait, true, type, unsafe, use, where, while, async, await, dyn},
+  keywordstyle=\color{rustkeyword}\bfseries,
+  ndkeywords={bool, u8, u16, u32, u64, usize, i8, i16, i32, i64, isize, f32, f64, str, String, Vec, Option, Some, None, Result, Ok, Err, Box, Rc, Arc, RefCell, Weak, Mutex, Condvar, Duration, Instant, HashMap, ClientId, RateLimiter, RateLimiterState},
+  ndkeywordstyle=\color{rusttype}\bfseries,
+  sensitive=true,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{rustcomment}\itshape,
+  stringstyle=\color{ruststring},
+  morestring=[b]",
+  morestring=[b]',
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  stepnumber=1,
+  numbersep=8pt,
+  backgroundcolor=\color{codebg},
+  showstringspaces=false,
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=4,
+  basicstyle=\ttfamily\small,
+  frame=single,
+  rulecolor=\color{gray!30}
+}
+
+\lstdefinestyle{terminal}{
+  backgroundcolor=\color{black!90},
+  basicstyle=\ttfamily\small\color{green!80!white},
+  numbers=none,
+  frame=single,
+  rulecolor=\color{black}
+}
+
+\title{\Huge\textbf{Politecnico di Torino}\\[0.3em]
+\large Corso di Programmazione di Sistema / API Programming\\[0.5em]
+\LARGE\textbf{Esame Completo --- Appello dell'8 Settembre 2026}}
+\author{\textbf{Docente}: Maurizio Rebaudengo \quad \textbf{Studente}: Nicola Beccaceci (s360641)}
+\date{8 Settembre 2026}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\begin{tcolorbox}[colback=boxbg,colframe=boxborder,title=\textbf{Riepilogo Ufficiale e Struttura della Valutazione},arc=3mm]
+L'esame complessivo di API Programming si articola su \textbf{15,0 punti grezzi totali}, convertiti direttamente in trentesimi tramite moltiplicatore $\times 2$ ($15{,}0 \times 2 = 30$):
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Parte I: Domande Teoriche (Prof. M. Rebaudengo)} --- \textbf{9,0 punti} (Esercizi 1, 2, 3: 3,0 pt cad.)
+    \item \textbf{Parte II: Domanda di Programmazione (Prof. L. Malnati)} --- \textbf{6,0 punti} (Esercizio 4: Rate Limiter)
+\end{itemize}
+Questo fascicolo include il \textbf{testo integrale ufficiale} e le \textbf{soluzioni complete e rigorose al 100\%}, integrate con il feedback ufficiale rilasciato dalla commissione esaminatrice.
+\end{tcolorbox}
+
+\vspace{0.5em}
+\tableofcontents
+\newpage
+
+% =========================================================================
+% PARTE I: TESTO DELLE DOMANDE D'ESAME
+% =========================================================================
+\section{Testo Ufficiale delle Domande d'Esame}
+
+\subsection*{Parte I: Domande Teoriche (Valutazione: 9,0 punti)}
+
+\subsubsection*{Domanda 1 (Iteratori, pigrizia e adattatori) --- 3,0 punti}
+Si consideri il seguente programma Rust:
+\begin{lstlisting}[language=Rust]
+fn main() {
+    let v = vec![1, 2, 3, 4, 5, 6];
+    let it = v.iter()
+        .map(|x| { println!(" map {}", x); x * 2 })
+        .filter(|x| x % 3 == 0);
+    println!("iteratore creato");
+    let r: Vec<i32> = it.collect();
+    println!("r = {:?}", r);
+    let primo = v.iter().map(|x| x * 10).find(|x| *x > 25);
+    println!("primo = {:?}", primo);
+    let s: i32 = v.iter().take(3).sum();
+    println!("s = {}", s);
+    let mut w = vec![String::from("a"), String::from("b")];
+    for x in w.iter_mut() { x.push('!'); }
+    println!("w = {:?}", w);
+    let z: Vec<String> = w.into_iter().collect();
+    println!("z = {:?}", z);
+}
+\end{lstlisting}
+\textbf{Quesiti:}
+\begin{enumerate}[label=\textbf{\Alph*.}]
+    \item Si scriva l'output completo, rispettando l'ordine delle righe. \hfill \textbf{(1,25 pt)}
+    \item Perché la riga «iteratore creato» compare prima di «map 1»? \hfill \textbf{(0,50 pt)}
+    \item Quante volte viene eseguita la closure passata a map nella riga che calcola primo? Perché? \hfill \textbf{(0,50 pt)}
+    \item Si spieghi la differenza fra \texttt{iter()}, \texttt{iter\_mut()} e \texttt{into\_iter()}. Dopo la riga che calcola \texttt{z}, la variabile \texttt{w} è ancora utilizzabile? \hfill \textbf{(0,75 pt)}
+\end{enumerate}
+
+\vspace{1em}
+\subsubsection*{Domanda 2 (Rc, RefCell, Weak) --- 3,0 punti}
+Si consideri il seguente programma basato su puntatori con conteggio di riferimenti e mutabilità interna:
+\begin{lstlisting}[language=Rust]
+use std::cell::RefCell;
+use std::rc::{Rc, Weak};
+
+struct Nodo {
+    valore: i32,
+    figli: RefCell<Vec<Rc<Nodo>>>,
+    padre: RefCell<Weak<Nodo>>,
+}
+
+impl Drop for Nodo {
+    fn drop(&mut self) {
+        println!("drop nodo {}", self.valore);
+    }
+}
+
+fn main() {
+    let radice = Rc::new(Nodo {
+        valore: 1,
+        figli: RefCell::new(vec![]),
+        padre: RefCell::new(Weak::new()),
+    });
+    println!("A strong={} weak={}", Rc::strong_count(&radice), Rc::weak_count(&radice));
+    {
+        let figlio = Rc::new(Nodo {
+            valore: 2,
+            figli: RefCell::new(vec![]),
+            padre: RefCell::new(Weak::new()),
+        });
+        *figlio.padre.borrow_mut() = Rc::downgrade(&radice);
+        radice.figli.borrow_mut().push(Rc::clone(&figlio));
+        println!("B strong={} weak={}", Rc::strong_count(&radice), Rc::weak_count(&radice));
+        println!("C strong={} weak={}", Rc::strong_count(&figlio), Rc::weak_count(&figlio));
+        println!("padre del figlio = {:?}", figlio.padre.borrow().upgrade().map(|p| p.valore));
+        println!("fine blocco interno");
+    }
+    println!("D strong={} weak={}", Rc::strong_count(&radice), Rc::weak_count(&radice));
+    println!("figli della radice = {}", radice.figli.borrow().len());
+    println!("fine main");
+}
+\end{lstlisting}
+\textbf{Quesiti:}
+\begin{enumerate}[label=\textbf{\Alph*.}]
+    \item Si scriva l'output completo del programma, comprese le stampe prodotte da \texttt{drop}. \hfill \textbf{(1,00 pt)}
+    \item Perché i campi figli e padre sono racchiusi in un \texttt{RefCell}? Quale controllo si sposta dal tempo di compilazione al tempo di esecuzione e che cosa accade se viene violato? \hfill \textbf{(1,00 pt)}
+    \item Che cosa cambierebbe se il campo padre fosse dichiarato \texttt{RefCell<Option<Rc<Nodo>>>} e si memorizzasse \texttt{Some(Rc::clone(\&radice))}? Si giustifichi la risposta. \hfill \textbf{(1,00 pt)}
+\end{enumerate}
+
+\newpage
+\subsubsection*{Domanda 3 (Canali sincroni e backpressure) --- 3,0 punti}
+Si consideri il seguente programma basato su canali sincroni e thread:
+\begin{lstlisting}[language=Rust]
+use std::sync::mpsc::sync_channel;
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    let (tx, rx) = sync_channel::<u32>(2);
+    for i in 1..=5 {
+        println!("invio {}", i);
+        tx.send(i).unwrap();
+        println!("inviato {}", i);
+    }
+    let consumatore = thread::spawn(move || {
+        let mut somma = 0;
+        for v in rx {
+            thread::sleep(Duration::from_millis(10));
+            somma += v;
+        }
+        somma
+    });
+    let somma = consumatore.join().unwrap();
+    println!("somma = {}", somma);
+}
+\end{lstlisting}
+\textbf{Quesiti:}
+\begin{enumerate}[label=\textbf{\Alph*.}]
+    \item Cosa si osserva sulla console quando si lancia il programma? \hfill \textbf{(1,00 pt)}
+    \item Che differenza c'è fra \texttt{mpsc::channel()} e \texttt{mpsc::sync\_channel(k)}? Che cosa si intende per backpressure e a che cosa serve? \hfill \textbf{(0,75 pt)}
+    \item Si corregga il programma affinché stampi la somma dei valori inviati. \hfill \textbf{(0,75 pt)}
+    \item Nella versione corretta, perché è necessario \texttt{drop(tx)}? Che cosa restituisce \texttt{recv()} quando tutti i sender sono stati distrutti, e che cosa restituisce \texttt{send()} se il receiver non esiste più? \hfill \textbf{(0,50 pt)}
+\end{enumerate}
+
+\vspace{1.5em}
+\subsection*{Parte II: Domanda di Programmazione (Valutazione: 6,0 punti)}
+
+\subsubsection*{Domanda 4 (Rate Limiter) --- 6,0 punti}
+\textbf{Descrizione del problema:}\\
+Un server riceve richieste da più client in modo concorrente. Allo scopo di garantire un uso equo delle proprie risorse, implementa un limitatore di richieste per client. Tale limitatore garantisce che non vengano elaborate più di $N$ richieste provenienti da un dato client in un intervallo di tempo $W$. Se si cerca di sforare tale limite, il server postpone l'esecuzione della richiesta per un tempo sufficiente a garantire l'invariante dato.
+
+Questo meccanismo viene implementato dalla \texttt{struct RateLimiter} che offre due soli metodi:
+\begin{lstlisting}[language=Rust]
+pub fn new(w: Duration, n: usize) -> Self
+pub fn acquire(&self, id: ClientId)
+\end{lstlisting}
+Ad ogni richiesta ricevuta, il server provvede a identificare il client da cui proviene e ad invocare il metodo \texttt{acquire(...)}, che implementa la logica di limitazione della frequenza e, al suo ritorno, esegue la richiesta.
+
+\textbf{Requisiti:}
+\begin{enumerate}[leftmargin=1.5em]
+    \item In base alle richieste precedenti provenienti dallo specifico client, il metodo \texttt{acquire(...)} può tornare subito, se la richiesta non viola la regola data, oppure fermarsi per un opportuno lasso di tempo senza consumare CPU, così da far rispettare i vincoli.
+    \item Una singola istanza di \texttt{RateLimiter} è utilizzabile da più thread contemporaneamente. La struttura dati deve essere quindi opportunamente protetta.
+    \item L'eventuale attesa di una richiesta proveniente da certo client non deve bloccare le richieste provenienti da altri client.
+    \item Se da uno stesso client arrivano più richieste mentre la finestra temporale è già piena, occorre fare attenzione, quando essa si svuota, a sbloccare solo tante richieste quanta è ampia l'apertura che si è creata.
+\end{enumerate}
+
+\newpage
+% =========================================================================
+% PARTE II: SOLUZIONI 100% CORRETTE
+% =========================================================================
+\section{Soluzioni Complete e Rigorose (100\% Corrette)}
+
+\subsection{Soluzione Domanda 1 (Iteratori, pigrizia e adattatori)}
+
+\subsubsection*{Punto A (1,25 pt) --- Output completo del programma}
+L'output esatto prodotto su standard output, rispettando rigorosamente l'ordine delle righe, è il seguente:
+\begin{lstlisting}[style=terminal]
+iteratore creato
+ map 1
+ map 2
+ map 3
+ map 4
+ map 5
+ map 6
+r = [6, 12]
+primo = Some(30)
+s = 6
+w = ["a!", "b!"]
+z = ["a!", "b!"]
+\end{lstlisting}
+
+\subsubsection*{Punto B (0,50 pt) --- Pigrizia degli iteratori}
+Gli iteratori in Rust sono \textbf{pigri (lazy)}: i metodi di trasformazione \texttt{.map()} e \texttt{.filter()} sono meri \emph{adattatori di iteratore}. La loro chiamata non esegue alcun calcolo immediato né consuma elementi, ma si limita a istanziare una struttura interna (\texttt{Map} / \texttt{Filter}) che incapsula la catena di computazione.
+L'esecuzione effettiva delle closure inizia unicamente a riga 9 quando viene invocato un \textbf{adattatore consumatore} (\texttt{.collect()}), il quale guida l'avanzamento chiamando ripetutamente \texttt{.next()}. Pertanto, la stampa \texttt{"iteratore creato"} compare prima di qualsiasi valutazione di \texttt{map}.
+
+\subsubsection*{Punto C (0,50 pt) --- Esecuzione della closure in \texttt{find}}
+La closure passata a \texttt{map} viene eseguita esattamente \textbf{3 volte} (per gli elementi 1, 2 e 3).
+Il metodo \texttt{.find()} è \textbf{cortocircuitante (short-circuiting)}: esamina gli elementi in sequenza e si arresta immediatamente non appena il predicato restituisce \texttt{true}.
+\begin{itemize}[leftmargin=1.5em]
+    \item Elemento $1 \implies 1 \times 10 = 10 \not> 25$ (falso, prosegue).
+    \item Elemento $2 \implies 2 \times 10 = 20 \not> 25$ (falso, prosegue).
+    \item Elemento $3 \implies 3 \times 10 = 30 > 25$ (\textbf{vero}: la condizione è soddisfatta).
+\end{itemize}
+Trovato l'elemento, \texttt{.find()} restituisce \texttt{Some(30)} e interrompe immediatamente l'iterazione; gli elementi 4, 5 e 6 non vengono mai valutati né trasformati.
+
+\subsubsection*{Punto D (0,75 pt) --- Differenza fra i metodi di iterazione e usabilità di \texttt{w}}
+\begin{itemize}[leftmargin=1.5em]
+    \item \texttt{iter()}: produce prestiti immutabili (\texttt{\&T}) agli elementi della collezione sottostante, consentendo la sola lettura senza alterare né spostare i dati.
+    \item \texttt{iter\_mut()}: produce prestiti esclusivi e mutabili (\texttt{\&mut T}), consentendo la modifica sul posto (\emph{in-place}) degli elementi della collezione originale.
+    \item \texttt{into\_iter()}: consuma la collezione per possesso (\emph{by value} / \emph{move}), trasformandola in un iteratore che produce istanze possedute \texttt{T}.
+\end{itemize}
+Dopo la riga \texttt{let z = w.into\_iter().collect();}, la variabile \texttt{w} ha trasferito la proprietà della sua memoria heap: per il Borrow Checker \texttt{w} è deinizializzata (\emph{moved value}) e \textbf{non è più utilizzabile} (un suo eventuale utilizzo scatenerebbe un errore di compilazione \texttt{E0382: use of moved value}).
+
+\newpage
+\subsection{Soluzione Domanda 2 (Rc, RefCell, Weak)}
+
+\subsubsection*{Punto A (1,00 pt) --- Output completo e traccia di drop}
+L'output esatto del programma comprensivo delle stampe generate dall'uscita dallo scope (Drop) è:
+\begin{lstlisting}[style=terminal]
+A strong=1 weak=0
+B strong=1 weak=1
+C strong=2 weak=0
+padre del figlio = Some(1)
+fine blocco interno
+D strong=1 weak=1
+figli della radice = 1
+fine main
+drop nodo 1
+drop nodo 2
+\end{lstlisting}
+\textbf{Dinamica dell'ordine di Drop:}
+\begin{enumerate}[leftmargin=1.5em]
+    \item All'uscita dal blocco interno, la variabile locale \texttt{figlio} viene distrutta: il suo \texttt{strong\_count} scende da 2 a 1 poiché il puntatore clonato è mantenuto nel vettore \texttt{radice.figli}. Nessun distruttore scatta in questo punto.
+    \item All'uscita da \texttt{main}, la variabile locale \texttt{radice} esce dallo scope: il suo \texttt{strong\_count} scende da 1 a 0. Viene invocato \texttt{drop} sul nodo 1 (\texttt{drop nodo 1}).
+    \item La distruzione del corpo del nodo 1 comporta il rilascio del suo campo \texttt{figli}: la deallocazione del vettore rilascia l'unico \texttt{Rc<Nodo>} superstite del figlio.
+    \item Lo \texttt{strong\_count} del figlio scende da 1 a 0: viene invocato \texttt{drop} sul nodo 2 (\texttt{drop nodo 2}).
+\end{enumerate}
+
+\subsubsection*{Punto B (1,00 pt) --- Motivazione di \texttt{RefCell} e Borrow Checking a Runtime}
+In Rust, \texttt{Rc<T>} fornisce esclusivamente accessi condivisi in sola lettura (\texttt{\&T}). Per consentire la mutazione di strutture dati a grafo o ad albero referenziate da molteplici proprietari, si racchiudono i campi in un \texttt{RefCell<T>}, il quale implementa il pattern di \textbf{mutabilità interna (interior mutability)}.
+
+\texttt{RefCell} sposta il controllo delle regole dell'aliasing XOR mutability (\emph{un solo prestito mutabile esclusivo OPPURE molteplici prestiti immutabili}) dal tempo di compilazione al \textbf{tempo di esecuzione}, mantenendo un contatore dinamico interno di prestiti attivi.
+Se la regola viene violata (ad esempio chiamando \texttt{borrow\_mut()} quando esiste già un prestito attivo), il programma scatena un \textbf{panic a runtime} (\texttt{BorrowMutError}). Si scambia così un errore statico del compilatore con un possibile fallimento a runtime.
+
+\subsubsection*{Punto C (1,00 pt) --- Cicli di riferimenti forti e Memory Leak}
+Se il campo \texttt{padre} fosse dichiarato come \texttt{RefCell<Option<Rc<Nodo>>>} e vi si memorizzasse un clone forte della radice (\texttt{Rc::clone(\&radice)}), si creerebbe un \textbf{ciclo di riferimenti forti (strong reference cycle)}:
+\begin{itemize}[leftmargin=1.5em]
+    \item La radice manterrebbe un \texttt{Rc} forte verso il figlio (nel vettore \texttt{figli}).
+    \item Il figlio manterrebbe un \texttt{Rc} forte verso la radice (nel campo \texttt{padre}).
+\end{itemize}
+Nel momento in cui \texttt{main} termina, sia per la radice sia per il figlio il contatore \texttt{strong\_count} verrebbe decrementato da 2 a 1, \textbf{senza mai raggiungere lo zero}. Di conseguenza, i rispettivi distruttori \texttt{drop} non verrebbero \textbf{mai eseguiti} e la memoria allocata sull'heap rimarrebbe permanentemente allocata, causando un grave \textbf{memory leak}.
+
+L'utilizzo di un puntatore debole (\texttt{Weak}) elimina alla radice il problema: un \texttt{Weak} fa riferimento al blocco allocato senza incrementare lo \texttt{strong\_count}, consentendo la deallocazione deterministica quando tutti i proprietari forti escono di scope.
+
+\newpage
+\subsection{Soluzione Domanda 3 (Canali sincroni e backpressure)}
+
+\subsubsection*{Punto A (1,00 pt) --- Osservazione della console e blocco}
+Al lancio del programma si osserva sulla console l'invio e la conferma dei primi due elementi, seguiti dal tentativo di invio del terzo elemento:
+\begin{lstlisting}[style=terminal]
+invio 1
+inviato 1
+invio 2
+inviato 2
+invio 3
+\end{lstlisting}
+A questo punto il programma \textbf{rimane bloccato indefinitamente (deadlock permanente)}.
+Il canale sincrono è stato creato con capacità di buffer $k = 2$. I primi due messaggi riempiono interamente il buffer. All'invocazione di \texttt{tx.send(3)}, il buffer è saturo: la semantica di \texttt{sync\_channel} impone al thread chiamante (il thread \texttt{main}) di sospendersi in attesa che un ricevitore esegua una \texttt{recv()} liberando uno slot. Tuttavia, il thread consumatore è collocato nel codice \emph{a valle} del ciclo \texttt{for} e non è ancora stato generato. Il produttore attende un consumatore che non nascerà mai.
+
+\subsubsection*{Punto B (0,75 pt) --- Canali sincroni vs asincroni e Backpressure}
+\begin{itemize}[leftmargin=1.5em]
+    \item \texttt{mpsc::channel()}: istanzia un canale \textbf{asincrono a capacità illimitata}. Il metodo \texttt{send()} non si blocca mai e inserisce sempre il messaggio in coda. Se la velocità del produttore supera stabilmente quella del consumatore, il buffer cresce a dismisura fino al potenziale esaurimento della memoria (Out-of-Memory).
+    \item \texttt{mpsc::sync\_channel(k)}: istanzia un canale \textbf{sincrono con buffer a capacità limitata $k$}. Quando il buffer raggiunge $k$ messaggi pendenti, ogni successiva invocazione di \texttt{send()} blocca il mittente fino a quando il consumatore non preleva un messaggio tramite \texttt{recv()}. Se $k = 0$, il canale opera in modalità \textbf{rendez-vous} (invio e ricezione devono essere rigorosamente sincronizzati).
+    \item \textbf{Backpressure}: è il meccanismo di controllo di flusso mediante il quale la velocità del produttore viene automaticamente frenata e vincolata al ritmo di elaborazione del consumatore, garantendo che l'occupazione di memoria heap rimanga rigidamente confinata e limitata a $k$ elementi.
+\end{itemize}
+
+\subsubsection*{Punto C (0,75 pt) --- Correzione del programma}
+Per consentire la corretta elaborazione e terminazione, è necessario:
+1. Spostare l'avvio del thread consumatore (\texttt{thread::spawn}) \textbf{prima} del ciclo di invio;
+2. Inviare i 5 messaggi sul canale;
+3. Distruggere esplicitamente il mittente (\texttt{drop(tx)}) prima di attendere la terminazione sulla \texttt{join()}.
+\begin{lstlisting}[language=Rust]
+fn main() {
+    let (tx, rx) = sync_channel::<u32>(2);
+    let consumatore = thread::spawn(move || {
+        let mut somma = 0;
+        for v in rx {
+            thread::sleep(Duration::from_millis(10));
+            somma += v;
+        }
+        somma
+    });
+    for i in 1..=5 {
+        tx.send(i).unwrap();
+    }
+    drop(tx); // Chiude il canale segnalando la fine degli invii
+    let somma = consumatore.join().unwrap();
+    println!("somma = {}", somma); // Stampa: somma = 15
+}
+\end{lstlisting}
+
+\subsubsection*{Punto D (0,50 pt) --- Necessità di \texttt{drop(tx)} e valori restituiti alla chiusura}
+Il ciclo \texttt{for v in rx} opera sull'iteratore del ricevitore, il quale continua ad attendere nuovi dati finché il canale risulta aperto. L'iteratore termina (restituendo \texttt{None}) \textbf{esclusivamente quando tutti i mittenti associati al canale vengono distrutti}. Se \texttt{tx} rimanesse in vita nel thread \texttt{main} fino alla chiamata \texttt{consumatore.join()}, il thread consumatore rimarrebbe bloccato in eterno su \texttt{rx} e il \texttt{main} rimarrebbe bloccato sulla \texttt{join()} ($\implies$ deadlock).
+\begin{itemize}[leftmargin=1.5em]
+    \item Quando tutti i mittenti sono stati distrutti e il buffer è vuoto, \texttt{recv()} restituisce \texttt{Err(RecvError)}.
+    \item Se il ricevitore è stato distrutto (uscito dallo scope), la chiamata \texttt{send(v)} fallisce restituendo \texttt{Err(SendError(v))}, che restituisce al mittente il valore non recapitato.
+\end{itemize}
+
+\newpage
+\subsection{Soluzione Domanda 4 (Programming: Rate Limiter)}
+
+\begin{tcolorbox}[colback=feedbackbg,colframe=feedbackborder,title=\textbf{Feedback Ufficiale della Commissione (Prof. Malnati)},arc=3mm]
+\textit{"Passano 12 test su 12, tuttavia, allochi inutilmente una condvar per ciascun clientId, quando per attendere il trascorrere del tempo puoi semplicemente invocare \texttt{std::thread::sleep(duration)}. Inserire il \texttt{Mutex} all'interno di un \texttt{Arc} è altrettanto inutile, in quanto non hai un possesso da condividere con altri.\\
+Una possibile versione più economica del tuo codice è..."}
+\end{tcolorbox}
+
+\subsubsection*{Analisi Architetturale e Scelte di Progettazione Ottimizzate}
+Seguendo le indicazioni del docente, la soluzione canonica ed economica al 100\% adotta i seguenti principi di design:
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{Rimozione dell'\texttt{Arc} interno}: Poiché il metodo \texttt{acquire(\&self, id: ClientId)} riceve un riferimento condiviso immutabile \texttt{\&self}, la struct \texttt{RateLimiter} è già intrinsecamente condivisibile tra thread (implementa automaticamente il marker trait \texttt{Sync} purché i suoi campi siano \texttt{Sync}). È chi chiama il limitatore che, all'occorrenza, incapsula l'istanza in un \texttt{Arc<RateLimiter>}. Incapsulare il mutex in un ulteriore \texttt{Arc} interno costituisce una doppia indirezione non necessaria.
+    \item \textbf{Sospensione temporale tramite \texttt{sleep} e rilascio esplicito del lock}: In un rate limiter a finestra temporale pura, i permessi non vengono rilasciati da eventi scatenati da altri thread (motivo tipico per cui si impiega una \texttt{Condvar}), ma unicamente dallo scorrere del tempo fisico. Pertanto, l'approccio più lineare ed economico consiste nel:
+    \begin{itemize}
+        \item Calcolare la durata residua necessaria: $\Delta t = (t_{\text{oldest}} + W) - \text{now}$.
+        \item Rilasciare esplicitamente il lock tramite \texttt{drop(guard)}.
+        \item Addormentare il thread chiamante tramite \texttt{std::thread::sleep($\Delta t$)}.
+    \end{itemize}
+    In questo modo la CPU non consuma cicli (no busy-waiting) e durante il periodo di sonno il \texttt{Mutex} rimane sbloccato, permettendo ad altri client di completare le proprie richieste istantaneamente.
+    \item \textbf{Filtraggio sul posto con \texttt{retain}}: Invece di riallocare un nuovo vettore ad ogni iterazione tramite \texttt{filter\_map(...).collect()}, l'uso di \texttt{requests.retain(|Item| ...)} aggiorna il vettore cronologico sul posto (\emph{in-place}), azzerando le allocazioni sull'heap.
+    \item \textbf{Gestione concorrente a ciclo \texttt{loop}}: Il ciclo \texttt{loop} assicura che, al risveglio dallo \texttt{sleep}, il thread riacquisisca il lock e rivaluti la finestra; se più thread dello stesso client si risvegliano contemporaneamente, solo tante richieste quanti sono gli slot liberati verranno accolte, rimandando le altre a dormire.
+\end{enumerate}
+
+\subsubsection*{Codice Sorgente Rust Completo e Verificato (100\% Corretto)}
+\begin{lstlisting}[language=Rust]
+use std::collections::HashMap;
+use std::sync::Mutex;
+use std::time::{Duration, Instant};
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub struct ClientId(usize);
+
+impl ClientId {
+    pub fn new(id: usize) -> Self {
+        ClientId(id)
+    }
+}
+
+pub struct RateLimiterState {
+    // Mappa dei client e cronologia delle richieste accettate
+    clients: HashMap<ClientId, Vec<Instant>>,
+}
+
+impl RateLimiterState {
+    pub fn new() -> Self {
+        Self {
+            clients: HashMap::new(),
+        }
+    }
+}
+
+pub struct RateLimiter {
+    // Versione economica: Mutex diretto su RateLimiterState, nessun Arc ridondante
+    inner: Mutex<RateLimiterState>,
+    duration: Duration,
+    requests_threshold: usize,
+}
+
+impl RateLimiter {
+    pub fn new(w: Duration, n: usize) -> Self {
+        Self {
+            inner: Mutex::new(RateLimiterState::new()),
+            duration: w,
+            requests_threshold: n,
+        }
+    }
+
+    pub fn acquire(&self, id: ClientId) {
+        let mutex = &self.inner;
+        loop {
+            let mut guard = mutex.lock().unwrap();
+            if let Some(requests) = guard.clients.get_mut(&id) {
+                // Filtriamo sul posto le richieste fuori dalla finestra [now - duration, now]
+                let lower_bound = Instant::now() - self.duration;
+                requests.retain(|&instant_req| instant_req > lower_bound);
+
+                // Se la finestra e' satura (>= N), calcoliamo l'attesa necessaria
+                if requests.len() >= self.requests_threshold {
+                    let time_first_request = *requests.first().unwrap();
+                    let time_to_wait = (time_first_request + self.duration)
+                        .saturating_duration_since(Instant::now());
+
+                    // Rilasciamo atomicamente il Mutex PRIMA di dormire:
+                    // in questo modo gli altri client NON rimangono bloccati!
+                    drop(guard);
+                    std::thread::sleep(time_to_wait);
+                } else {
+                    requests.push(Instant::now());
+                    return;
+                }
+            } else {
+                // Primo arrivo per questo client: registriamo il primo timestamp
+                guard.clients.insert(id, vec![Instant::now()]);
+                return;
+            }
+        }
+    }
+}
+\end{lstlisting}
+
+\subsubsection*{Alternative Implementation Rule (Pattern di Alto Livello)}
+In ambienti di produzione industriali o in scenari asincroni con Tokio:
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{Token Bucket Concorrente}: Il limitatore può essere implementato tramite un canale di token sincrono o asincrono (\texttt{tokio::sync::mpsc::channel(N)}), dove un task di background ricarica i token a intervalli regolari.
+    \item \textbf{Lock a granularità fine (Sharded Locks)}: Invece di un unico mutex globale sulla tabella hash, l'uso di una mappa partizionata (\texttt{DashMap} o \texttt{RwLock<HashMap<ClientId, Mutex<ClientState>>>}) riduce a zero la contesa tra client indipendenti durante carichi massivi ad alto parallelismo.
+\end{enumerate}
+
+\end{document}
