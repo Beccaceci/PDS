@@ -17,4 +17,5 @@ This section covers system programming APIs. It includes:
 - **STUDY_GUIDE**: Comprehensive study guide for the API programming section.
 - **LABS**: Lab materials and exercises.
 - **SIMULATIONS**: 55 high-complexity, trait-driven Rust exam simulations with comprehensive test suites, architectural reverse-engineering, and a 100% type-coverage traceability matrix.
+- **PROJECT**: **Georuggine**, a high-performance distributed fleet telemetry and real-time management platform built in Safe Rust on Tokio, SQLite ACID persistence, and bidirectional messaging.
 

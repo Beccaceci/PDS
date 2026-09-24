@@ -19,3 +19,6 @@ texput.log
 
 # Rust
 **/target/
+*.db
+*.db-shm
+*.db-wal

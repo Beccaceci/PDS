@@ -1,0 +1,22 @@
+/target
+.idea
+.agents/
+
+# Ignore LaTeX intermediate artifacts
+*.aux
+*.log
+*.toc
+*.out
+*.lof
+*.lot
+*.lol
+*.fls
+*.fdb_latexmk
+*.listing
+*.synctex.gz
+
+# Project DB and system files
+*.db
+*.DS_Store
+__pycache__/
+*.pyc

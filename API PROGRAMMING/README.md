@@ -15,12 +15,13 @@ Scarica direttamente gli elaborati completi con un singolo click:
 | 📚 **Complete Study Guide** | Compendio teorico e pratico completo (24 capitoli, codice, layout di memoria) | [⬇️ **Scarica Study Guide (PDF)**](https://github.com/Beccaceci/PDS/raw/main/API%20PROGRAMMING/STUDY_GUIDE/main.pdf) | ~11.5 MB |
 | 📦 **Tutti gli Esami (2021–2026)** | Archivio ZIP contenente tutti i testi ufficiali e le soluzioni d'esame in PDF | [⬇️ **Scarica Tutti gli Esami (ZIP)**](https://github.com/Beccaceci/PDS/raw/main/API%20PROGRAMMING/EXAMS/all_exams.zip) | ~5.5 MB |
 | 🧪 **55 Simulazioni d'Esame** | Suite di 55 simulazioni Rust con test concorrenti e matrice di tracciabilità | [📁 **Esplora Directory Simulazioni**](https://github.com/Beccaceci/PDS/tree/main/API%20PROGRAMMING/SIMULATIONS) | ~5.4 MB |
+| 🛰️ **Progetto Georuggine** | Piattaforma distribuita di telemetria e gestione flotte (Tokio, FSM cinematica, SQLite ACID) | [📁 **Esplora Directory Project**](https://github.com/Beccaceci/PDS/tree/main/API%20PROGRAMMING/PROJECT) | Completo |
 
 ---
 
 ## 🏛️ Struttura del Repository
 
-La cartella `API PROGRAMMING` è organizzata in quattro macro-sezioni modulari:
+La cartella `API PROGRAMMING` è organizzata in sezioni modulari:
 
 ```text
 API PROGRAMMING/
@@ -40,9 +41,15 @@ API PROGRAMMING/
 │   ├── exam_reverse_engineering.md # Studio analitico dei pattern d'esame e scoring rubric
 │   └── traceability_matrix.md    # Matrice di copertura al 100% dei topic di corso
 │
-└── LABS/                         # Laboratori didattici del corso
-    ├── LAB01/ ... /LAB07/        # Esercitazioni pratiche guidate
-    └── README.md
+├── LABS/                         # Laboratori didattici del corso
+│   ├── LAB01/ ... /LAB07/        # Esercitazioni pratiche guidate
+│   └── README.md
+│
+└── PROJECT/                      # Georuggine — Distributed Fleet Telemetry & Management Platform
+    ├── Cargo.toml / Cargo.lock   # Manifest crate e dipendenze (Tokio, SQLite, Crossterm, ecc.)
+    ├── src/                      # Server daemon, client OBU, FSM cinematica, geodetica, terminal UI
+    ├── tests/                    # Suite completa di test unitari, integrazione ed end-to-end
+    └── docs/                     # Manuale utente e manuale del progettista
 ```
 
 ---
@@ -133,3 +140,15 @@ Richiede la progettazione e implementazione di una struttura dati concorrente in
   - **Assenza di attesa attiva (No busy-waiting)**: sospendere i thread con `Condvar` o `std::thread::sleep(duration)` rilasciando il lock.
   - **Nessuna sincronizzazione ridondante**: evitare `Arc` superflui all'interno della struct se il metodo riceve `&self` o `Condvar` non necessarie quando lo sblocco dipende solo dal tempo.
   - **Thread-Safety & Correttezza Concorrente**: rispetto di `Send` e `Sync`, assenza di deadlock e gestione di risvegli spuri mediante costrutti `loop { ... }`.
+
+---
+
+## 🛰️ 3. Progetto del Corso: Georuggine (`PROJECT/`)
+
+La cartella [`PROJECT/`](PROJECT/) ospita l'implementazione completa di **Georuggine**, la piattaforma di telemetria e gestione flotte sviluppata per l'esame:
+
+* **Architettura Asincrona**: Runtime **Tokio** multithreaded con gestione concorrente delle connessioni OBU su socket TCP.
+* **Tracking Cinematico & FSM**: Riconoscimento automatico degli stati veicolari (`Moving`, `Stopped`, `Disconnected`) con soglia temporale di stasi a 180s.
+* **Calcolo Geodetico**: Trigonometria sferica e formula dell'Haversine per calcolo distanze e aggregazioni a finestre mobili (giornaliere, settimanali, mensili).
+* **Persistenza & Affidabilità**: Database embedded SQLite con garanzie ACID, sincronizzazione stati e recupero resiliente post-riavvio.
+* **Suite di Test & Documentazione**: Test unitari, di integrazione ed end-to-end con simulazione client/server concorrente e documentazione tecnica completa in `docs/`.
